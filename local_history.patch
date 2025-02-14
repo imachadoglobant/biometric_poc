@@ -1,0 +1,424 @@
+Index: app/src/main/java/com/sample/biometric/di/StorageModule.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/sample/biometric/di/StorageModule.kt b/app/src/main/java/com/sample/biometric/di/StorageModule.kt
+--- a/app/src/main/java/com/sample/biometric/di/StorageModule.kt	
++++ b/app/src/main/java/com/sample/biometric/di/StorageModule.kt	(date 1739553779101)
+@@ -1,6 +1,9 @@
+ package com.sample.biometric.di
+ 
+ import android.content.Context
++import androidx.datastore.core.DataStore
++import androidx.datastore.preferences.core.Preferences
++import androidx.datastore.preferences.preferencesDataStore
+ import com.sample.biometric.data.storage.KeyValueStorage
+ import dagger.Module
+ import dagger.Provides
+@@ -13,12 +16,13 @@
+ @InstallIn(SingletonComponent::class)
+ object StorageModule {
+ 
++    private const val STORAGE_KEY = "STORAGE_KEY"
++
++    private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(STORAGE_KEY)
++
+     @Provides
+     @Singleton
+     fun provideKeyValueStorage(@ApplicationContext context: Context): KeyValueStorage{
+-        val preferences = context.getSharedPreferences("simpleStorage", Context.MODE_PRIVATE)
+-        return KeyValueStorage(
+-            sharedPreferences = preferences
+-        )
++        return KeyValueStorage(context.dataStore)
+     }
+ }
+\ No newline at end of file
+Index: app/src/main/java/com/sample/biometric/ui/screen/home/HomeViewModel.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/sample/biometric/ui/screen/home/HomeViewModel.kt b/app/src/main/java/com/sample/biometric/ui/screen/home/HomeViewModel.kt
+--- a/app/src/main/java/com/sample/biometric/ui/screen/home/HomeViewModel.kt	
++++ b/app/src/main/java/com/sample/biometric/ui/screen/home/HomeViewModel.kt	(date 1739559310566)
+@@ -26,8 +26,7 @@
+ 
+     init {
+         viewModelScope.launch {
+-            userRepository.
+-            isUserLoggedIn.collect {
++            userRepository.isUserLoggedIn.collect {
+                 _uiState.value = uiState.value.copy(
+                     loggedIn = it
+                 )
+Index: app/src/main/java/com/sample/biometric/ui/screen/login/LoginViewModel.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/sample/biometric/ui/screen/login/LoginViewModel.kt b/app/src/main/java/com/sample/biometric/ui/screen/login/LoginViewModel.kt
+--- a/app/src/main/java/com/sample/biometric/ui/screen/login/LoginViewModel.kt	
++++ b/app/src/main/java/com/sample/biometric/ui/screen/login/LoginViewModel.kt	(date 1739559310579)
+@@ -41,8 +41,12 @@
+     init {
+         viewModelScope.launch {
+             userRepository.isUserLoggedIn
+-                .map { Pair(it, biometricRepository.getBiometricInfo()) }
+-                .collect { info -> reduceState(info.first, info.second) }
++                .map {
++                    Pair(it, biometricRepository.getBiometricInfo())
++                }
++                .collect {
++                    info -> reduceState(info.first, info.second)
++                }
+         }
+     }
+ 
+@@ -131,10 +135,14 @@
+         }
+         viewModelScope.launch {
+             pendingAuthContext?.let { authContext ->
++                if (cryptoObject == null) {
++                    Timber.e("cryptoObject is null")
++                    return@launch
++                }
+                 if (authContext.purpose == CryptoPurpose.Encryption) {
+-                    startBiometricTokenEnrollment(cryptoObject!!)
++                    startBiometricTokenEnrollment(cryptoObject)
+                 } else {
+-                    startLoginWithToken(cryptoObject!!)
++                    startLoginWithToken(cryptoObject)
+                 }
+             }
+ 
+@@ -220,8 +228,8 @@
+     }
+ 
+     private fun handleError(e: Throwable?) {
+-        Timber.e(ex, "handleException: ${ex?.message}")
+-        ex?.let {
++        Timber.e(e, "handleException: ${e?.message}")
++        e?.let {
+             SnackbarManager.showMessage(R.string.msg_error_generic)
+         }
+     }
+@@ -230,10 +238,10 @@
+         e: InvalidCryptoLayerException,
+         isLogin: Boolean
+     ) {
+-        Timber.e(ex, "handleInvalidCryptoException... isLogin: $isLogin")
+-        if (ex.isKeyPermanentlyInvalidated) {
++        Timber.e(e, "handleInvalidCryptoException... isLogin: $isLogin")
++        if (e.isKeyPermanentlyInvalidated) {
+             SnackbarManager.showMessage(R.string.msg_error_key_permanently_invalidated)
+-        } else if (ex.isKeyInitFailed) {
++        } else if (e.isKeyInitFailed) {
+             SnackbarManager.showMessage(R.string.msg_error_key_init_fail)
+         } else {
+             SnackbarManager.showMessage(R.string.msg_error_generic)
+Index: app/src/main/java/com/sample/biometric/ui/screen/login/BiometricPromptContainer.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/sample/biometric/ui/screen/login/BiometricPromptContainer.kt b/app/src/main/java/com/sample/biometric/ui/screen/login/BiometricPromptContainer.kt
+--- a/app/src/main/java/com/sample/biometric/ui/screen/login/BiometricPromptContainer.kt	
++++ b/app/src/main/java/com/sample/biometric/ui/screen/login/BiometricPromptContainer.kt	(date 1739558797295)
+@@ -3,7 +3,12 @@
+ import androidx.biometric.BiometricPrompt
+ import androidx.biometric.BiometricPrompt.AuthenticationCallback
+ import androidx.biometric.BiometricPrompt.PromptInfo
+-import androidx.compose.runtime.*
++import androidx.compose.runtime.Composable
++import androidx.compose.runtime.LaunchedEffect
++import androidx.compose.runtime.State
++import androidx.compose.runtime.getValue
++import androidx.compose.runtime.mutableStateOf
++import androidx.compose.runtime.remember
+ import androidx.compose.ui.platform.LocalContext
+ import com.sample.biometric.common.findActivity
+ import timber.log.Timber
+@@ -57,7 +62,7 @@
+ 
+     fun authenticate(promptInfo: PromptInfo, cryptoObject: BiometricPrompt.CryptoObject) {
+         _promptInfo = promptInfo
+-        _cryptoObject = cryptoObject;
++        _cryptoObject = cryptoObject
+         _isPromptToShow.value = true
+     }
+ 
+Index: app/src/main/java/com/sample/biometric/data/impl/UserRepositoryImpl.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/sample/biometric/data/impl/UserRepositoryImpl.kt b/app/src/main/java/com/sample/biometric/data/impl/UserRepositoryImpl.kt
+--- a/app/src/main/java/com/sample/biometric/data/impl/UserRepositoryImpl.kt	
++++ b/app/src/main/java/com/sample/biometric/data/impl/UserRepositoryImpl.kt	(date 1739558845536)
+@@ -5,6 +5,7 @@
+ import kotlinx.coroutines.flow.MutableStateFlow
+ import kotlinx.coroutines.flow.StateFlow
+ import kotlinx.coroutines.flow.asStateFlow
++import kotlinx.coroutines.flow.single
+ import timber.log.Timber
+ 
+ class UserRepositoryImpl(
+@@ -26,7 +27,7 @@
+     }
+ 
+     override suspend fun loginWithToken(token: String) {
+-        val storedToken = keyValueStorage.getValue(BiometricRepositoryImpl.TOKEN_KEY)
++        val storedToken = keyValueStorage.getValue(BiometricRepositoryImpl.TOKEN_KEY).single()
+         _isUserLoggedIn.value = storedToken == token
+     }
+ 
+Index: app/src/main/java/com/sample/biometric/data/impl/BiometricRepositoryImpl.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/sample/biometric/data/impl/BiometricRepositoryImpl.kt b/app/src/main/java/com/sample/biometric/data/impl/BiometricRepositoryImpl.kt
+--- a/app/src/main/java/com/sample/biometric/data/impl/BiometricRepositoryImpl.kt	
++++ b/app/src/main/java/com/sample/biometric/data/impl/BiometricRepositoryImpl.kt	(date 1739558797318)
+@@ -13,7 +13,11 @@
+ import com.sample.biometric.data.model.BiometricInfo
+ import com.sample.biometric.data.storage.KeyValueStorage
+ import kotlinx.coroutines.CoroutineDispatcher
++import kotlinx.coroutines.CoroutineScope
+ import kotlinx.coroutines.Dispatchers
++import kotlinx.coroutines.Job
++import kotlinx.coroutines.flow.single
++import kotlinx.coroutines.launch
+ import kotlinx.coroutines.withContext
+ import timber.log.Timber
+ import java.util.UUID
+@@ -26,6 +30,8 @@
+     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+ ) : BiometricRepository {
+ 
++    private val coroutineScope = CoroutineScope(Job() + Dispatchers.IO)
++
+     private suspend fun checkInternalWithCrypto(): ValidationResult = withContext(dispatcher) {
+         val validationResult = cryptoEngine.validate()
+         when (validationResult) {
+@@ -46,7 +52,7 @@
+     override suspend fun getBiometricInfo(): BiometricInfo = withContext(dispatcher) {
+         val biometricAuthStatus = readBiometricAuthStatus()
+         val cryptoValidationResult = checkInternalWithCrypto()
+-        val isBiometricTokenPresent = isTokenPresent();
++        val isBiometricTokenPresent = isTokenPresent()
+         BiometricInfo(
+             biometricTokenPresent = isBiometricTokenPresent,
+             biometricAuthStatus = biometricAuthStatus,
+@@ -88,21 +94,25 @@
+     private fun getTokenFromBackend(): String {
+         // this is a mock generation
+         val token = UUID.randomUUID().toString()
+-        keyValueStorage.storeValue(TOKEN_KEY, token)
++        coroutineScope.launch {
++            keyValueStorage.storeValue(TOKEN_KEY, token)
++        }
+         return token
+     }
+ 
+     private fun storeDataAndIv(encryptedData: ByteArray, iv: ByteArray) {
+         val dataBase64 = Base64.encodeToString(encryptedData, Base64.DEFAULT)
+         val ivBase64 = Base64.encodeToString(iv, Base64.DEFAULT)
+-        keyValueStorage.storeValue(BIOMETRIC_TOKEN_KEY, dataBase64)
+-        keyValueStorage.storeValue(BIOMETRIC_IV_KEY, ivBase64)
++        coroutineScope.launch {
++            keyValueStorage.storeValue(BIOMETRIC_TOKEN_KEY, dataBase64)
++            keyValueStorage.storeValue(BIOMETRIC_IV_KEY, ivBase64)
++        }
+     }
+ 
+     override suspend fun decryptToken(cryptoObject: CryptoObject): String {
+         validateCryptoLayer()
+         // 1. read encrypted token (string base64 encoded)
+-        val token = keyValueStorage.getValue(BIOMETRIC_TOKEN_KEY)
++        val token = keyValueStorage.getValue(BIOMETRIC_TOKEN_KEY).single()
+         // 2. decode token data on byteArray
+         val tokenData = Base64.decode(token, Base64.DEFAULT)
+         // 3. decrypt token via cryptoEngine (using cipher inside cryptoObject
+@@ -115,7 +125,8 @@
+         validateCryptoLayer()
+         val iv: ByteArray? = when (purpose) {
+             CryptoPurpose.Decryption -> {
+-                Base64.decode(keyValueStorage.getValue(BIOMETRIC_IV_KEY), Base64.DEFAULT)
++                val iv = keyValueStorage.getValue(BIOMETRIC_IV_KEY).single()
++                Base64.decode(iv, Base64.DEFAULT)
+             }
+ 
+             else -> null
+@@ -123,10 +134,9 @@
+         cryptoEngine.createCryptoObject(purpose, iv)
+     }
+ 
+-    private fun isTokenPresent(): Boolean {
+-        return keyValueStorage.contains(key = BIOMETRIC_TOKEN_KEY) && keyValueStorage.contains(
+-            BIOMETRIC_IV_KEY
+-        )
++    private suspend fun isTokenPresent(): Boolean {
++        return keyValueStorage.contains(key = BIOMETRIC_TOKEN_KEY).single()
++            && keyValueStorage.contains(BIOMETRIC_IV_KEY).single()
+     }
+ 
+     override suspend fun clear() {
+@@ -144,7 +154,7 @@
+         }
+     }
+ 
+-    private fun clearCryptoAndData() {
++    private suspend fun clearCryptoAndData() {
+         cryptoEngine.clear()
+         keyValueStorage.clear()
+     }
+Index: app/src/main/java/com/sample/biometric/data/storage/KeyValueStorage.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/sample/biometric/data/storage/KeyValueStorage.kt b/app/src/main/java/com/sample/biometric/data/storage/KeyValueStorage.kt
+--- a/app/src/main/java/com/sample/biometric/data/storage/KeyValueStorage.kt	
++++ b/app/src/main/java/com/sample/biometric/data/storage/KeyValueStorage.kt	(date 1739558643804)
+@@ -1,34 +1,35 @@
+ package com.sample.biometric.data.storage
+ 
+-import android.annotation.SuppressLint
+-import android.content.SharedPreferences
++import androidx.datastore.core.DataStore
++import androidx.datastore.preferences.core.Preferences
++import androidx.datastore.preferences.core.edit
++import androidx.datastore.preferences.core.stringPreferencesKey
++import kotlinx.coroutines.flow.Flow
++import kotlinx.coroutines.flow.map
+ 
+-class KeyValueStorage(
+-    private val sharedPreferences: SharedPreferences
+-) {
++class KeyValueStorage(private val dataStore: DataStore<Preferences>) {
+ 
+-    fun getValue(key: String): String? {
+-        return sharedPreferences.getString(key, null)
++    fun getValue(key: String): Flow<String> = dataStore.data.map { preference ->
++        val preferencesKey = stringPreferencesKey(key)
++        preference[preferencesKey].orEmpty()
+     }
+ 
+-    fun storeValue(key: String, value: String) {
+-        sharedPreferences.edit()
+-            .putString(key, value)
+-            .commit()
++    suspend fun storeValue(key: String, value: String) {
++        dataStore.edit { preference ->
++            val preferencesKey = stringPreferencesKey(key)
++            preference[preferencesKey] = value
++        }
+     }
+ 
+-    fun removeValue(key: String){
+-        sharedPreferences.edit()
+-            .remove(key)
+-            .commit()
++    suspend fun clear() {
++        dataStore.edit { preference ->
++            preference.clear()
++        }
+     }
+ 
+-    fun clear(){
+-        sharedPreferences
+-            .edit()
+-            .clear()
+-            .commit()
++    fun contains(key: String): Flow<Boolean> = dataStore.data.map { preference ->
++        val preferencesKey = stringPreferencesKey(key)
++        preference.contains(preferencesKey)
+     }
+ 
+-    fun contains(key: String): Boolean = sharedPreferences.contains(key)
+ }
+\ No newline at end of file
+Index: app/src/main/java/com/sample/biometric/common/Result.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/sample/biometric/common/Result.kt b/app/src/main/java/com/sample/biometric/common/Result.kt
+--- a/app/src/main/java/com/sample/biometric/common/Result.kt	
++++ b/app/src/main/java/com/sample/biometric/common/Result.kt	(date 1739558845528)
+@@ -19,10 +19,10 @@
+     block().let { Result.Success(it) }
+ } catch (e: Exception) {
+     // propagate cancellation
+-    if (ex is CancellationException) {
+-        throw ex
++    if (e is CancellationException) {
++        throw e
+     }
+-    Result.Error(ex)
++    Result.Error(e)
+ }
+ 
+ internal inline fun <T> Result<T>.switch(
+Index: app/build.gradle.kts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/build.gradle.kts b/app/build.gradle.kts
+--- a/app/build.gradle.kts	
++++ b/app/build.gradle.kts	(date 1739553607318)
+@@ -73,6 +73,8 @@
+     implementation("com.google.dagger:hilt-android:2.55")
+     kapt("com.google.dagger:hilt-compiler:2.51.1")
+     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
++    // DataStore
++    implementation("androidx.datastore:datastore-preferences:1.1.2")
+     // Biometric
+     implementation("androidx.biometric:biometric:1.1.0")
+     //Test & dev support
+diff --git a/app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/sample/biometric/ui/screen/login/BiometricPromptContainerKt$BiometricPromptContainer$3.dex b/app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/com/sample/biometric/ui/screen/login/BiometricPromptContainerKt$BiometricPromptContainer$3.dex
+deleted file mode 100644
+index e69de29bb2d1d6434b8b29ae775ad8c2e48c5391..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+Hc$@<O00001
+
+diff --git a/app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/25c9050266ec5c21b87e9c4a7572ae54c57631c4772147b4b161c07853fd7329_2.jar b/app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/25c9050266ec5c21b87e9c4a7572ae54c57631c4772147b4b161c07853fd7329_2.jar
+deleted file mode 100644
+index e69de29bb2d1d6434b8b29ae775ad8c2e48c5391..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+Hc$@<O00001
+
+diff --git a/app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/25c9050266ec5c21b87e9c4a7572ae54c57631c4772147b4b161c07853fd7329_3.jar b/app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/25c9050266ec5c21b87e9c4a7572ae54c57631c4772147b4b161c07853fd7329_3.jar
+deleted file mode 100644
+index e69de29bb2d1d6434b8b29ae775ad8c2e48c5391..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+Hc$@<O00001
+
+diff --git a/app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/25c9050266ec5c21b87e9c4a7572ae54c57631c4772147b4b161c07853fd7329_0.jar b/app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/25c9050266ec5c21b87e9c4a7572ae54c57631c4772147b4b161c07853fd7329_0.jar
+deleted file mode 100644
+index e69de29bb2d1d6434b8b29ae775ad8c2e48c5391..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+Hc$@<O00001
+
+diff --git a/app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/25c9050266ec5c21b87e9c4a7572ae54c57631c4772147b4b161c07853fd7329_1.jar b/app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/25c9050266ec5c21b87e9c4a7572ae54c57631c4772147b4b161c07853fd7329_1.jar
+deleted file mode 100644
+index e69de29bb2d1d6434b8b29ae775ad8c2e48c5391..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+Hc$@<O00001
+
+diff --git a/app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/25c9050266ec5c21b87e9c4a7572ae54c57631c4772147b4b161c07853fd7329_4.jar b/app/build/intermediates/project_dex_archive/debug/dexBuilderDebug/out/25c9050266ec5c21b87e9c4a7572ae54c57631c4772147b4b161c07853fd7329_4.jar
+deleted file mode 100644
+index e69de29bb2d1d6434b8b29ae775ad8c2e48c5391..0000000000000000000000000000000000000000
+GIT binary patch
+literal 0
+Hc$@<O00001
+
