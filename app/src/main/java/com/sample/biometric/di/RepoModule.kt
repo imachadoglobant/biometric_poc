@@ -1,9 +1,9 @@
 package com.sample.biometric.di
 
 import androidx.biometric.BiometricManager
-import com.sample.biometric.data.crypto.CryptoEngine
 import com.sample.biometric.data.BiometricRepository
 import com.sample.biometric.data.UserRepository
+import com.sample.biometric.data.crypto.CryptoEngine
 import com.sample.biometric.data.impl.BiometricRepositoryImpl
 import com.sample.biometric.data.impl.UserRepositoryImpl
 import com.sample.biometric.data.storage.KeyValueStorage
@@ -11,7 +11,6 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import timber.log.Timber
 import javax.inject.Singleton
 
 @Module
@@ -20,8 +19,7 @@ object RepoModule {
 
     @Provides
     @Singleton
-    fun provideUserRepository( keyValueStorage: KeyValueStorage): UserRepository{
-        Timber.d("provideUserRepository")
+    fun provideUserRepository(keyValueStorage: KeyValueStorage): UserRepository {
         return UserRepositoryImpl(keyValueStorage)
     }
 
@@ -31,7 +29,7 @@ object RepoModule {
         biometricManager: BiometricManager,
         keyValueStorage: KeyValueStorage,
         cryptoEngine: CryptoEngine
-    ): BiometricRepository{
+    ): BiometricRepository {
         return BiometricRepositoryImpl(
             biometricManager = biometricManager,
             keyValueStorage = keyValueStorage,

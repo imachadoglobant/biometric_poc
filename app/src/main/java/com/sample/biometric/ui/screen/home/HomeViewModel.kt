@@ -14,6 +14,7 @@ import javax.inject.Inject
 class HomeViewModel @Inject constructor(
     private val userRepository: UserRepository
 ): ViewModel() {
+
     private val _uiState: MutableStateFlow<HomeUiState> by lazy {
         MutableStateFlow(HomeUiState(
             loggedIn = userRepository.isUserLoggedIn.value

@@ -73,6 +73,8 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.55")
     kapt("com.google.dagger:hilt-compiler:2.51.1")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    // DataStore
+    implementation("androidx.datastore:datastore-preferences:1.1.2")
     // Biometric
     implementation("androidx.biometric:biometric:1.1.0")
     //Test & dev support

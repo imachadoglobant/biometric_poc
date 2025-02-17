@@ -46,9 +46,11 @@ fun HomeScreen(
     ) {
         Text(text = stringResource(id = R.string.home_content_message))
         Divider(Modifier.width(8.dp))
-        Button(onClick = {
-            viewModel.logout()
-        }) {
+        Button(
+            onClick = {
+                viewModel.logout()
+            }
+        ) {
             Text(text = stringResource(id = R.string.logout_button_text))
         }
     }

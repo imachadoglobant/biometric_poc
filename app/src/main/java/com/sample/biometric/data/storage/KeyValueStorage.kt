@@ -1,34 +1,43 @@
 package com.sample.biometric.data.storage
 
-import android.annotation.SuppressLint
-import android.content.SharedPreferences
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.first
 
-class KeyValueStorage(
-    private val sharedPreferences: SharedPreferences
-) {
+class KeyValueStorage(context: Context) {
 
-    fun getValue(key: String): String? {
-        return sharedPreferences.getString(key, null)
+    companion object {
+        private const val STORAGE_KEY = "STORAGE_KEY"
     }
 
-    fun storeValue(key: String, value: String) {
-        sharedPreferences.edit()
-            .putString(key, value)
-            .commit()
+    private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(STORAGE_KEY)
+    private val dataStore = context.dataStore
+
+    suspend fun getValue(key: String): String {
+        val preferencesKey = stringPreferencesKey(key)
+        return dataStore.data.first()[preferencesKey].orEmpty()
     }
 
-    fun removeValue(key: String){
-        sharedPreferences.edit()
-            .remove(key)
-            .commit()
+    suspend fun storeValue(key: String, value: String) {
+        dataStore.edit { preference ->
+            val preferencesKey = stringPreferencesKey(key)
+            preference[preferencesKey] = value
+        }
     }
 
-    fun clear(){
-        sharedPreferences
-            .edit()
-            .clear()
-            .commit()
+    suspend fun clear() {
+        dataStore.edit { preference ->
+            preference.clear()
+        }
     }
 
-    fun contains(key: String): Boolean = sharedPreferences.contains(key)
+    suspend fun contains(key: String): Boolean {
+        val preferencesKey = stringPreferencesKey(key)
+        return dataStore.data.first().contains(preferencesKey)
+    }
+
 }

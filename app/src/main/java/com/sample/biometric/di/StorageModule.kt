@@ -15,10 +15,7 @@ object StorageModule {
 
     @Provides
     @Singleton
-    fun provideKeyValueStorage(@ApplicationContext context: Context): KeyValueStorage{
-        val preferences = context.getSharedPreferences("simpleStorage", Context.MODE_PRIVATE)
-        return KeyValueStorage(
-            sharedPreferences = preferences
-        )
-    }
+    fun provideKeyValueStorage(
+        @ApplicationContext context: Context
+    ) = KeyValueStorage(context)
 }

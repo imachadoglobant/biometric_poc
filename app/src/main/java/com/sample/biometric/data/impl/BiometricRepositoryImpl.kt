@@ -46,7 +46,7 @@ class BiometricRepositoryImpl(
     override suspend fun getBiometricInfo(): BiometricInfo = withContext(dispatcher) {
         val biometricAuthStatus = readBiometricAuthStatus()
         val cryptoValidationResult = checkInternalWithCrypto()
-        val isBiometricTokenPresent = isTokenPresent()
+        val isBiometricTokenPresent = isTokenPresent();
         BiometricInfo(
             biometricTokenPresent = isBiometricTokenPresent,
             biometricAuthStatus = biometricAuthStatus,
@@ -85,14 +85,14 @@ class BiometricRepositoryImpl(
         }
     }
 
-    private fun getTokenFromBackend(): String {
+    private suspend fun getTokenFromBackend(): String {
         // this is a mock generation
         val token = UUID.randomUUID().toString()
         keyValueStorage.storeValue(TOKEN_KEY, token)
         return token
     }
 
-    private fun storeDataAndIv(encryptedData: ByteArray, iv: ByteArray) {
+    private suspend fun storeDataAndIv(encryptedData: ByteArray, iv: ByteArray) {
         val dataBase64 = Base64.encodeToString(encryptedData, Base64.DEFAULT)
         val ivBase64 = Base64.encodeToString(iv, Base64.DEFAULT)
         keyValueStorage.storeValue(BIOMETRIC_TOKEN_KEY, dataBase64)
@@ -123,7 +123,7 @@ class BiometricRepositoryImpl(
         cryptoEngine.createCryptoObject(purpose, iv)
     }
 
-    private fun isTokenPresent(): Boolean {
+    private suspend fun isTokenPresent(): Boolean {
         return keyValueStorage.contains(key = BIOMETRIC_TOKEN_KEY) && keyValueStorage.contains(
             BIOMETRIC_IV_KEY
         )
@@ -144,7 +144,7 @@ class BiometricRepositoryImpl(
         }
     }
 
-    private fun clearCryptoAndData() {
+    private suspend fun clearCryptoAndData() {
         cryptoEngine.clear()
         keyValueStorage.clear()
     }

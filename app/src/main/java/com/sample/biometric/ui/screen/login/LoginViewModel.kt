@@ -90,6 +90,92 @@ class LoginViewModel @Inject constructor(
         && !biometricInfo.biometricTokenPresent
         && biometricInfo.canAskAuthentication())
 
+    private suspend fun startBiometricTokenEnrollment(cryptoObject: CryptoObject) {
+        val result = getResult {
+            biometricRepository.fetchAndStoreEncryptedToken(cryptoObject)
+        }
+        result.switch(
+            success = {
+                Timber.i("fetchAndStoreEncryptedToken done")
+            },
+            error = {
+                it?.let { ex ->
+                    if (ex is InvalidCryptoLayerException) {
+                        handleInvalidCryptoException(ex, false)
+                    } else {
+                        handleError(ex)
+                    }
+                }
+            }
+        )
+    }
+
+    private suspend fun startLoginWithToken(cryptoObject: CryptoObject) {
+        getResult {
+            val tokenAsCredential = biometricRepository.decryptToken(cryptoObject)
+            doLoginWithToken(tokenAsCredential)
+        }.switch(
+            success = { Timber.d("Login Done") },
+            error = { th ->
+                if (th is InvalidCryptoLayerException) {
+                    _uiState.update { it.copy(canLoginWithBiometry = false) }
+                } else {
+                    handleError(th)
+                }
+            }
+        )
+    }
+
+    private fun doLoginWithToken(tokenAsCredential: String) {
+        viewModelScope.launch {
+            delay(100)
+            userRepository.loginWithToken(tokenAsCredential)
+        }
+    }
+
+    private suspend fun prepareAuthContext(purpose: CryptoPurpose): AuthContext {
+        val cryptoObject = biometricRepository.createCryptoObject(purpose)
+        return AuthContext(
+            purpose = purpose,
+            cryptoObject = cryptoObject
+        )
+    }
+
+    private fun handleError(e: Throwable?) {
+        Timber.e(e, "handleException: ${e?.message}")
+        e?.let {
+            SnackbarManager.showMessage(R.string.msg_error_generic)
+        }
+    }
+
+    private fun handleInvalidCryptoException(
+        e: InvalidCryptoLayerException,
+        isLogin: Boolean
+    ) {
+        Timber.e(e, "handleInvalidCryptoException... isLogin: $isLogin")
+        if (e.isKeyPermanentlyInvalidated) {
+            SnackbarManager.showMessage(R.string.msg_error_key_permanently_invalidated)
+        } else if (e.isKeyInitFailed) {
+            SnackbarManager.showMessage(R.string.msg_error_key_init_fail)
+        } else {
+            SnackbarManager.showMessage(R.string.msg_error_generic)
+        }
+        if (isLogin) {
+            //update to inform ui that login with biometry is not available
+            _uiState.update {
+                it.copy(canLoginWithBiometry = false)
+            }
+        }
+    }
+
+    private fun showMessage(message: String) {
+        SnackbarManager.showMessage(message)
+    }
+
+    private fun showMessage(@StringRes messageTextId: Int) {
+        SnackbarManager.showMessage(messageTextId)
+    }
+
     fun setUsername(username: String) {
         _uiState.value = _uiState.value.copy(usernameField = username)
     }
@@ -150,49 +236,6 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    private suspend fun startBiometricTokenEnrollment(cryptoObject: CryptoObject) {
-        val result = getResult {
-            biometricRepository.fetchAndStoreEncryptedToken(cryptoObject)
-        }
-        result.switch(
-            success = {
-                Timber.i("fetchAndStoreEncryptedToken done")
-            },
-            error = {
-                it?.let { ex ->
-                    if (ex is InvalidCryptoLayerException) {
-                        handleInvalidCryptoException(ex, false)
-                    } else {
-                        handleError(ex)
-                    }
-                }
-            }
-        )
-    }
-
-    private suspend fun startLoginWithToken(cryptoObject: CryptoObject) {
-        getResult {
-            val tokenAsCredential = biometricRepository.decryptToken(cryptoObject)
-            doLoginWithToken(tokenAsCredential)
-        }.switch(
-            success = { Timber.d("Login Done") },
-            error = { th ->
-                if (th is InvalidCryptoLayerException) {
-                    _uiState.update { it.copy(canLoginWithBiometry = false) }
-                } else {
-                    handleError(th)
-                }
-            }
-        )
-    }
-
-    private fun doLoginWithToken(tokenAsCredential: String) {
-        viewModelScope.launch {
-            delay(100)
-            userRepository.loginWithToken(tokenAsCredential)
-        }
-    }
-
     fun requireBiometricLogin() {
         viewModelScope.launch {
             getResult {
@@ -220,46 +263,4 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    private suspend fun prepareAuthContext(purpose: CryptoPurpose): AuthContext {
-        val cryptoObject = biometricRepository.createCryptoObject(purpose)
-        return AuthContext(
-            purpose = purpose,
-            cryptoObject = cryptoObject
-        )
-    }
-
-    private fun handleError(e: Throwable?) {
-        Timber.e(e, "handleException: ${e?.message}")
-        e?.let {
-            SnackbarManager.showMessage(R.string.msg_error_generic)
-        }
-    }
-
-    private fun handleInvalidCryptoException(
-        e: InvalidCryptoLayerException,
-        isLogin: Boolean
-    ) {
-        Timber.e(e, "handleInvalidCryptoException... isLogin: $isLogin")
-        if (e.isKeyPermanentlyInvalidated) {
-            SnackbarManager.showMessage(R.string.msg_error_key_permanently_invalidated)
-        } else if (e.isKeyInitFailed) {
-            SnackbarManager.showMessage(R.string.msg_error_key_init_fail)
-        } else {
-            SnackbarManager.showMessage(R.string.msg_error_generic)
-        }
-        if (isLogin) {
-            //update to inform ui that login with biometry is not available
-            _uiState.update {
-                it.copy(canLoginWithBiometry = false)
-            }
-        }
-    }
-
-    private fun showMessage(message: String) {
-        SnackbarManager.showMessage(message)
-    }
-
-    private fun showMessage(@StringRes messageTextId: Int) {
-        SnackbarManager.showMessage(messageTextId)
-    }
 }
