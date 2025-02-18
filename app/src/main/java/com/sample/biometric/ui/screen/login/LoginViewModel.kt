@@ -11,19 +11,19 @@ import com.sample.biometric.common.DataResult.Error
 import com.sample.biometric.common.DataResult.Loading
 import com.sample.biometric.common.DataResult.Success
 import com.sample.biometric.data.BiometricRepository
-import com.sample.biometric.data.UserRepository
 import com.sample.biometric.data.error.InvalidCryptoLayerException
 import com.sample.biometric.data.model.BiometricInfo
 import com.sample.biometric.data.model.CryptoPurpose
 import com.sample.biometric.data.model.CryptoPurpose.Decryption
+import com.sample.biometric.domain.usecases.GetUserUseCase
+import com.sample.biometric.domain.usecases.LoginWithTokenUseCase
+import com.sample.biometric.domain.usecases.LoginWithUsernameUseCase
 import com.sample.biometric.ui.screen.biometric.BiometricContext
 import com.sample.biometric.ui.snackbar.SnackbarManager
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -31,7 +31,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val userRepository: UserRepository,
+    private val getUser: GetUserUseCase,
+    private val loginWithUsername: LoginWithUsernameUseCase,
+    private val loginWithToken: LoginWithTokenUseCase,
     private val biometricRepository: BiometricRepository
 ) : ViewModel() {
 
@@ -40,22 +42,15 @@ class LoginViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            userRepository.state
-                .map { state ->
-                    Pair(state, biometricRepository.getBiometricInfo())
-                }
-                .collect { info ->
-                    reduceState(
-                        token = info.first?.token,
-                        biometricInfo = info.second
-                    )
-                }
+            initState()
         }
     }
 
-    private suspend fun reduceState(token: String?, biometricInfo: BiometricInfo) {
-        val isLoggedIn = token != null
+    private suspend fun initState() {
+        val token = getUser().successDataOrNull()?.token
+        val isLoggedIn = token?.isNotBlank() == true
         Timber.d("isUserLoggedIn=$isLoggedIn")
+        val biometricInfo = biometricRepository.getBiometricInfo()
 
         val currentState = uiState.value
         val askBiometricEnrollment =
@@ -72,7 +67,6 @@ class LoginViewModel @Inject constructor(
                 is Success -> authContext = result.data
             }
         }
-        // update state
         _uiState.update {
             it.copy(
                 token = token,
@@ -90,9 +84,10 @@ class LoginViewModel @Inject constructor(
         isLoggedIn: Boolean,
         currentState: LoginUIState,
         biometricInfo: BiometricInfo
-    ) = (isLoggedIn && !currentState.askBiometricEnrollment
+    ) = isLoggedIn
+        && !currentState.askBiometricEnrollment
         && !biometricInfo.biometricTokenPresent
-        && biometricInfo.canAskAuthentication())
+        && biometricInfo.canAskAuthentication()
 
     private suspend fun startBiometricTokenEnrollment(cryptoObject: CryptoObject) {
         val token = _uiState.value.token.orEmpty()
@@ -119,10 +114,11 @@ class LoginViewModel @Inject constructor(
         val tokenAsCredential =
             (biometricRepository.decryptToken(cryptoObject) as? Success?)?.data ?: run {
                 // Handle resiliency
+                Timber.e("startLoginWithToken cryptoObject is null")
                 return
             }
         viewModelScope.launch {
-            when (val result = doLoginWithToken(tokenAsCredential)) {
+            when (val result = loginWithToken(tokenAsCredential)) {
                 is Loading -> {
                     // Show progress indicator
                 }
@@ -142,24 +138,20 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    private suspend fun doLoginWithToken(tokenAsCredential: String): DataResult<Unit> {
-        delay(100)
-        return userRepository.loginWithToken(tokenAsCredential)
-    }
-
     private suspend fun prepareAuthContext(purpose: CryptoPurpose): DataResult<BiometricContext> {
-        when (val result = biometricRepository.createCryptoObject(purpose)) {
+        return when (val result = biometricRepository.createCryptoObject(purpose)) {
             is Success -> {
                 val cryptoObject = result.data ?: return Error()
-                return Success(
+                Success(
                     BiometricContext(
                         purpose = purpose,
                         cryptoObject = cryptoObject
                     )
                 )
             }
+
             else -> {
-                return Error((result as? Error)?.exception)
+                Error((result as? Error)?.exception)
             }
         }
     }
@@ -215,7 +207,10 @@ class LoginViewModel @Inject constructor(
             return
         }
         viewModelScope.launch {
-            userRepository.login(username, password)
+            val result = loginWithUsername(username, password)
+            _uiState.update {
+                it.copy(token = result.token)
+            }
         }
     }
 

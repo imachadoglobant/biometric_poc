@@ -1,7 +1,4 @@
 package com.sample.biometric.data
-import com.sample.biometric.common.DataResult
-import com.sample.biometric.data.model.UserData
-import kotlinx.coroutines.flow.StateFlow
 
 /**
  * User repository
@@ -9,22 +6,23 @@ import kotlinx.coroutines.flow.StateFlow
 interface UserRepository {
 
     /**
-     * Flow that contains if the user data when logged in
+     * Stores user info
      */
-    val state: StateFlow<UserData?>
+    suspend fun saveUser(username: String, token: String)
 
     /**
-     * Authenticate using username and password
+     * Retrieve user token if authenticated
      */
-    suspend fun login(username: String, password: String)
+    suspend fun getToken(): String
 
     /**
-     * Authenticate using biometric data
+     * Retrieve user name if authenticated
      */
-    suspend fun loginWithToken(token: String): DataResult<Unit>
+    suspend fun getUsername(): String
 
     /**
-     * Clear current session out
+     * Clears user session out
      */
     suspend fun logout()
+
 }
