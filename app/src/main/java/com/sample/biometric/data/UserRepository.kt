@@ -1,5 +1,6 @@
 package com.sample.biometric.data
-import com.sample.biometric.data.impl.UserData
+import com.sample.biometric.common.DataResult
+import com.sample.biometric.data.model.UserData
 import kotlinx.coroutines.flow.StateFlow
 
 /**
@@ -20,7 +21,7 @@ interface UserRepository {
     /**
      * Authenticate using biometric data
      */
-    suspend fun loginWithToken(token: String)
+    suspend fun loginWithToken(token: String): DataResult<Unit>
 
     /**
      * Clear current session out

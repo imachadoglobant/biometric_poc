@@ -8,7 +8,7 @@ import android.security.keystore.KeyProperties.KEY_ALGORITHM_AES
 import android.security.keystore.KeyProperties.PURPOSE_DECRYPT
 import android.security.keystore.KeyProperties.PURPOSE_ENCRYPT
 import androidx.biometric.BiometricPrompt.CryptoObject
-import com.sample.biometric.common.CryptoPurpose
+import com.sample.biometric.data.model.CryptoPurpose
 import com.sample.biometric.data.crypto.ValidationResult.KEY_INIT_FAIL
 import com.sample.biometric.data.crypto.ValidationResult.KEY_PERMANENTLY_INVALIDATED
 import com.sample.biometric.data.crypto.ValidationResult.OK

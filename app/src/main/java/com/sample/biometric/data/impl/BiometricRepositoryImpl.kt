@@ -8,7 +8,9 @@ import androidx.biometric.BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED
 import androidx.biometric.BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE
 import androidx.biometric.BiometricManager.BIOMETRIC_SUCCESS
 import androidx.biometric.BiometricPrompt.CryptoObject
-import com.sample.biometric.common.CryptoPurpose
+import com.sample.biometric.common.DataResult
+import com.sample.biometric.common.DataResult.Error
+import com.sample.biometric.common.DataResult.Success
 import com.sample.biometric.data.BiometricRepository
 import com.sample.biometric.data.PreferenceRepository
 import com.sample.biometric.data.crypto.CryptoEngine
@@ -25,6 +27,8 @@ import com.sample.biometric.data.model.BiometricAuthStatus.TEMPORARY_NOT_AVAILAB
 import com.sample.biometric.data.model.BiometricInfo
 import com.sample.biometric.data.model.BiometricInfo.KeyStatus.INVALIDATED
 import com.sample.biometric.data.model.BiometricInfo.KeyStatus.NOT_READY
+import com.sample.biometric.data.model.CryptoPurpose
+import com.sample.biometric.data.model.CryptoPurpose.Decryption
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -45,8 +49,12 @@ class BiometricRepositoryImpl(
 
     override suspend fun getBiometricInfo(): BiometricInfo = withContext(dispatcher) {
         val biometricAuthStatus = readBiometricAuthStatus()
+        Timber.d("biometricAuthStatus=$biometricAuthStatus")
         val cryptoValidationResult = checkInternalWithCrypto()
+        Timber.d("cryptoValidationResult=$cryptoValidationResult")
         val isBiometricTokenPresent = isTokenPresent()
+        Timber.d("isBiometricTokenPresent=$isBiometricTokenPresent")
+
         BiometricInfo(
             biometricTokenPresent = isBiometricTokenPresent,
             biometricAuthStatus = biometricAuthStatus,
@@ -62,14 +70,17 @@ class BiometricRepositoryImpl(
         cryptoObject: CryptoObject,
         token: String
     ) = withContext(dispatcher) {
-        validateCryptoLayer()
+        val error = validateCryptoLayer() as? Error
+        if (error != null) return@withContext error
         // 2. encrypt the data using the cipher inside the cryptoObject
         val encryptedData = cryptoEngine.encrypt(token, cryptoObject)
         // 3. Store encrypted data and iv.
         encryptedData?.iv?.let { iv ->
             storeDataAndIv(encryptedData.data, iv)
+            return@withContext Success(Unit)
         } ?: run {
             Timber.e("encryptedData or iv are null")
+            return@withContext Error()
         }
     }
 
@@ -78,9 +89,8 @@ class BiometricRepositoryImpl(
         when (validationResult) {
             KEY_PERMANENTLY_INVALIDATED,
             KEY_INIT_FAIL -> {
-                // Delete data immediately is a policy that we have decided to implement: you have always to
-                // notify this condition to the user
-                clearCryptoAndData()
+                Timber.e("checkInternalWithCrypto: validationResult=$validationResult")
+                clear()
             }
 
             else -> {
@@ -106,29 +116,33 @@ class BiometricRepositoryImpl(
         preferenceRepository.storeValue(BIOMETRIC_IV_KEY, ivBase64)
     }
 
-    override suspend fun decryptToken(cryptoObject: CryptoObject): String {
-        validateCryptoLayer()
+    override suspend fun decryptToken(cryptoObject: CryptoObject): DataResult<String> {
+        val error = validateCryptoLayer() as? Error
+        if (error != null) return Error(error.exception)
         // 1. read encrypted token (string base64 encoded)
         val token = preferenceRepository.getValue(BIOMETRIC_TOKEN_KEY)
         // 2. decode token data on byteArray
         val tokenData = Base64.decode(token, Base64.DEFAULT)
         // 3. decrypt token via cryptoEngine (using cipher inside cryptoObject
-        return cryptoEngine.decrypt(tokenData, cryptoObject)
+        return Success(cryptoEngine.decrypt(tokenData, cryptoObject))
     }
 
     override suspend fun createCryptoObject(
         purpose: CryptoPurpose
-    ): CryptoObject = withContext(dispatcher) {
-        validateCryptoLayer()
-        val iv = if (purpose == CryptoPurpose.Decryption) {
+    ): DataResult<CryptoObject> = withContext(dispatcher) {
+        val error = validateCryptoLayer() as? Error
+        if (error != null) return@withContext Error(error.exception)
+
+        val iv = if (purpose == Decryption) {
             Base64.decode(preferenceRepository.getValue(BIOMETRIC_IV_KEY), Base64.DEFAULT)
         } else {
             null
         }
-        cryptoEngine.createCryptoObject(purpose, iv)
+        return@withContext Success(cryptoEngine.createCryptoObject(purpose, iv))
     }
 
     override suspend fun clear() {
+        cryptoEngine.clear()
         preferenceRepository.clear()
     }
 
@@ -140,16 +154,14 @@ class BiometricRepositoryImpl(
      * Validate the crypto layer. In case of invalid status, this method
      * throws an [InvalidCryptoLayerException]
      */
-    private suspend fun validateCryptoLayer() {
+    private suspend fun validateCryptoLayer(): DataResult<Unit> {
         val status = checkInternalWithCrypto()
-        if (status != OK) {
-            throw InvalidCryptoLayerException(status)
-        }
-    }
 
-    private suspend fun clearCryptoAndData() {
-        cryptoEngine.clear()
-        preferenceRepository.clear()
+        return if (status != OK) {
+            return Error(InvalidCryptoLayerException(status))
+        } else {
+            Success(Unit)
+        }
     }
 
 }

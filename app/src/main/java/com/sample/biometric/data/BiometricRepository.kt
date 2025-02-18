@@ -1,7 +1,9 @@
 package com.sample.biometric.data
 
+import android.provider.ContactsContract.Data
 import androidx.biometric.BiometricPrompt.CryptoObject
-import com.sample.biometric.common.CryptoPurpose
+import com.sample.biometric.common.DataResult
+import com.sample.biometric.data.model.CryptoPurpose
 import com.sample.biometric.data.model.BiometricInfo
 
 /**
@@ -25,7 +27,10 @@ interface BiometricRepository {
      * @throws com.sample.biometric.data.error.InvalidCryptoLayerException if
      * crypto layer is invalid
      */
-    suspend fun fetchAndStoreEncryptedToken(cryptoObject: CryptoObject, token: String)
+    suspend fun fetchAndStoreEncryptedToken(
+        cryptoObject: CryptoObject,
+        token: String
+    ): DataResult<Unit>
 
     /**
      * Decrypt the token using the [cryptoObject] passed as parameter
@@ -35,7 +40,7 @@ interface BiometricRepository {
      * @throws com.sample.biometric.data.error.InvalidCryptoLayerException if
      * crypto layer is invalid
      */
-    suspend fun decryptToken(cryptoObject: CryptoObject): String
+    suspend fun decryptToken(cryptoObject: CryptoObject): DataResult<String>
 
     /**
      * Create a new [CryptoObject] instance for the specified purpose
@@ -44,7 +49,7 @@ interface BiometricRepository {
      * @throws com.sample.biometric.data.error.InvalidCryptoLayerException if
      * crypto layer is invalid
      */
-    suspend fun createCryptoObject(purpose: CryptoPurpose): CryptoObject
+    suspend fun createCryptoObject(purpose: CryptoPurpose): DataResult<CryptoObject>
 
     /**
      * Clear the stored information

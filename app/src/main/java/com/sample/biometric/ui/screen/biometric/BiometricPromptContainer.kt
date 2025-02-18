@@ -1,24 +1,25 @@
-package com.sample.biometric.ui.screen.login
+package com.sample.biometric.ui.screen.biometric
 
+import android.content.res.Resources
 import androidx.biometric.BiometricPrompt
 import androidx.biometric.BiometricPrompt.AuthenticationCallback
 import androidx.biometric.BiometricPrompt.AuthenticationResult
 import androidx.biometric.BiometricPrompt.PromptInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import com.sample.biometric.R
 import com.sample.biometric.common.findActivity
+import com.sample.biometric.data.model.CryptoPurpose
 import timber.log.Timber
 
 @Composable
 fun BiometricPromptContainer(
-    state: BiometricPromptContainerState,
+    state: BiometricPromptState,
     onAuthSucceeded: (cryptoObject: BiometricPrompt.CryptoObject?) -> Unit = {},
-    onAuthError: (AuthError) -> Unit = {},
+    onAuthError: (BiometricError) -> Unit = {},
 ) {
 
     val callback = remember(state) {
@@ -26,7 +27,7 @@ fun BiometricPromptContainer(
             override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                 Timber.e("onAuthenticationError: $errorCode : $errString")
                 state.resetShowFlag()
-                onAuthError(AuthError(errorCode, errString.toString()))
+                onAuthError(BiometricError(errorCode, errString.toString()))
             }
 
             override fun onAuthenticationSucceeded(result: AuthenticationResult) {
@@ -50,34 +51,24 @@ fun BiometricPromptContainer(
 
 }
 
-class BiometricPromptContainerState {
-    private lateinit var _cryptoObject: BiometricPrompt.CryptoObject
-    private lateinit var _promptInfo: PromptInfo
-
-    val promptInfo: PromptInfo by lazy { _promptInfo }
-    val cryptoObject: BiometricPrompt.CryptoObject by lazy {
-        _cryptoObject
-    }
-    private val _isPromptToShow = mutableStateOf(false)
-    val isPromptToShow: State<Boolean> = _isPromptToShow
-
-    fun authenticate(promptInfo: PromptInfo, cryptoObject: BiometricPrompt.CryptoObject) {
-        _promptInfo = promptInfo
-        _cryptoObject = cryptoObject
-        _isPromptToShow.value = true
-    }
-
-    fun resetShowFlag() {
-        _isPromptToShow.value = false
-    }
-}
-
 @Composable
-fun rememberPromptContainerState(): BiometricPromptContainerState = remember {
-    BiometricPromptContainerState()
+fun rememberPromptContainerState(): BiometricPromptState = remember {
+    BiometricPromptState()
 }
 
-data class AuthError(
-    val errorCode: Int,
-    val errString: String
-)
+fun createPromptInfo(purpose: CryptoPurpose, resources: Resources): PromptInfo {
+    return if (purpose == CryptoPurpose.Encryption) {
+        PromptInfo.Builder()
+            .setTitle(resources.getString(R.string.prompt_title_enroll_token))
+            .setSubtitle(resources.getString(R.string.prompt_subtitle_enroll_token))
+            .setNegativeButtonText(resources.getString(R.string.prompt_cancel))
+            .build()
+    } else {
+        PromptInfo.Builder()
+            .setTitle(resources.getString(R.string.prompt_title_login))
+            .setSubtitle(resources.getString(R.string.prompt_subtitle_login))
+            .setNegativeButtonText(resources.getString(R.string.prompt_cancel))
+            .build()
+    }
+}
+

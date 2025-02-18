@@ -38,7 +38,7 @@ class PreferenceRepositoryImpl(context: Context): PreferenceRepository {
 
     override suspend fun contains(key: String): Boolean {
         val preferencesKey = stringPreferencesKey(key)
-        return dataStore.data.first().contains(preferencesKey)
+        return dataStore.data.first()[preferencesKey]?.isNotBlank() == true
     }
 
 }

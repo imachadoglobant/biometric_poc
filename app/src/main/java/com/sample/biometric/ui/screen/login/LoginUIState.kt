@@ -1,5 +1,7 @@
 package com.sample.biometric.ui.screen.login
 
+import com.sample.biometric.ui.screen.biometric.BiometricContext
+
 data class LoginUIState (
     val usernameField: String = "",
     val passwordField: String = "",
@@ -23,7 +25,7 @@ data class LoginUIState (
     /**
      * Represent the Authentication context of our prompt
      */
-    val authContext: AuthContext? = null,
+    val biometricContext: BiometricContext? = null,
 ) {
 
     val isAuthenticated = token != null

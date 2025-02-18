@@ -1,7 +1,10 @@
 package com.sample.biometric.data.impl
 
+import com.sample.biometric.common.DataResult
 import com.sample.biometric.data.PreferenceRepository
 import com.sample.biometric.data.UserRepository
+import com.sample.biometric.data.error.InvalidTokenException
+import com.sample.biometric.data.model.UserData
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,26 +39,25 @@ class UserRepositoryImpl(private val preferenceRepository: PreferenceRepository)
         )
     }
 
-    override suspend fun loginWithToken(token: String) {
+    override suspend fun loginWithToken(token: String): DataResult<Unit> {
         val storedToken = preferenceRepository.getValue(TOKEN_KEY)
 
         if (storedToken != token) {
             logout()
-            return
+            return DataResult.Error(InvalidTokenException())
         }
 
         _state.value = UserData(
             username = preferenceRepository.getValue(USERNAME_KEY),
             token = token
         )
+        return DataResult.Success(Unit)
     }
 
     override suspend fun logout() {
+        preferenceRepository.clear()
         _state.value = null
     }
+
 }
 
-data class UserData(
-    val username: String,
-    val token: String
-)

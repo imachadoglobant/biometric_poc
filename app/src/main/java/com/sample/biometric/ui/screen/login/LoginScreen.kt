@@ -1,7 +1,5 @@
 package com.sample.biometric.ui.screen.login
 
-import android.content.res.Resources
-import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,9 +36,11 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import com.sample.biometric.R
-import com.sample.biometric.common.CryptoPurpose
 import com.sample.biometric.ui.navigation.HomeRoute
 import com.sample.biometric.ui.navigation.LoginRoute
+import com.sample.biometric.ui.screen.biometric.BiometricPromptContainer
+import com.sample.biometric.ui.screen.biometric.createPromptInfo
+import com.sample.biometric.ui.screen.biometric.rememberPromptContainerState
 
 @Composable
 fun LoginScreen(
@@ -71,7 +71,7 @@ fun LoginScreen(
         }
     )
 
-    uiState.authContext?.let { auth ->
+    uiState.biometricContext?.let { auth ->
         val resources = LocalContext.current.resources
         LaunchedEffect(key1 = auth) {
             val promptInfo = createPromptInfo(auth.purpose, resources)
@@ -184,19 +184,5 @@ fun NavGraphBuilder.addLoginRoute(navController: NavController) {
     }
 }
 
-fun createPromptInfo(purpose: CryptoPurpose, resources: Resources): BiometricPrompt.PromptInfo {
-    return if (purpose == CryptoPurpose.Encryption) {
-        BiometricPrompt.PromptInfo.Builder()
-            .setTitle(resources.getString(R.string.prompt_title_enroll_token))
-            .setSubtitle(resources.getString(R.string.prompt_subtitle_enroll_token))
-            .setNegativeButtonText(resources.getString(R.string.prompt_cancel))
-            .build()
-    } else {
-        BiometricPrompt.PromptInfo.Builder()
-            .setTitle(resources.getString(R.string.prompt_title_login))
-            .setSubtitle(resources.getString(R.string.prompt_subtitle_login))
-            .setNegativeButtonText(resources.getString(R.string.prompt_cancel))
-            .build()
-    }
-}
+
 
