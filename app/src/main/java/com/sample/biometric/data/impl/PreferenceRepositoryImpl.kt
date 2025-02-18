@@ -1,4 +1,4 @@
-package com.sample.biometric.data.storage
+package com.sample.biometric.data.impl
 
 import android.content.Context
 import androidx.datastore.core.DataStore
@@ -6,9 +6,10 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.sample.biometric.data.PreferenceRepository
 import kotlinx.coroutines.flow.first
 
-class KeyValueStorage(context: Context) {
+class PreferenceRepositoryImpl(context: Context): PreferenceRepository {
 
     companion object {
         private const val STORAGE_KEY = "STORAGE_KEY"
@@ -17,25 +18,25 @@ class KeyValueStorage(context: Context) {
     private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(STORAGE_KEY)
     private val dataStore = context.dataStore
 
-    suspend fun getValue(key: String): String {
+    override suspend fun getValue(key: String): String {
         val preferencesKey = stringPreferencesKey(key)
         return dataStore.data.first()[preferencesKey].orEmpty()
     }
 
-    suspend fun storeValue(key: String, value: String) {
+    override suspend fun storeValue(key: String, value: String) {
         dataStore.edit { preference ->
             val preferencesKey = stringPreferencesKey(key)
             preference[preferencesKey] = value
         }
     }
 
-    suspend fun clear() {
+    override suspend fun clear() {
         dataStore.edit { preference ->
             preference.clear()
         }
     }
 
-    suspend fun contains(key: String): Boolean {
+    override suspend fun contains(key: String): Boolean {
         val preferencesKey = stringPreferencesKey(key)
         return dataStore.data.first().contains(preferencesKey)
     }

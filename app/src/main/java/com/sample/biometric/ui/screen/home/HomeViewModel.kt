@@ -13,12 +13,14 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val userRepository: UserRepository
-): ViewModel() {
+) : ViewModel() {
 
     private val _uiState: MutableStateFlow<HomeUiState> by lazy {
-        MutableStateFlow(HomeUiState(
-            loggedIn = userRepository.isUserLoggedIn.value
-        ))
+        MutableStateFlow(
+            HomeUiState(
+                loggedIn = userRepository.state.value != null
+            )
+        )
     }
 
     val uiState: StateFlow<HomeUiState> by lazy {
@@ -27,15 +29,15 @@ class HomeViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            userRepository.isUserLoggedIn.collect {
+            userRepository.state.collect {
                 _uiState.value = uiState.value.copy(
-                    loggedIn = it
+                    loggedIn = it != null
                 )
             }
         }
     }
 
-    fun logout(){
+    fun logout() {
         viewModelScope.launch {
             userRepository.logout()
         }

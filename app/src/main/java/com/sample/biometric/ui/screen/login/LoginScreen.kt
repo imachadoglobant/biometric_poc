@@ -50,7 +50,7 @@ fun LoginScreen(
 ) {
     val uiState: LoginUIState by viewModel.uiState.collectAsStateWithLifecycle()
     val navigateToHome by remember(uiState) {
-        derivedStateOf { uiState.loggedIn && !uiState.askBiometricEnrollment }
+        derivedStateOf { uiState.isAuthenticated && !uiState.askBiometricEnrollment }
     }
     val focusManager = LocalFocusManager.current
 

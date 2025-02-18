@@ -10,12 +10,12 @@ data class LoginUIState (
     val canLoginWithBiometry: Boolean = false,
 
     /**
-     * True when the user is logged in, false otherwise
+     * User token when the user is logged in, null otherwise
      */
-    val loggedIn: Boolean = false,
+    val token: String? = null,
 
     /**
-     * indicate that we should to show the biometric prompt to the user to enroll
+     * Indicate that we should to show the biometric prompt to the user to enroll
      * the biometric token
      */
     val askBiometricEnrollment: Boolean = false,
@@ -24,5 +24,9 @@ data class LoginUIState (
      * Represent the Authentication context of our prompt
      */
     val authContext: AuthContext? = null,
-)
+) {
+
+    val isAuthenticated = token != null
+
+}
 

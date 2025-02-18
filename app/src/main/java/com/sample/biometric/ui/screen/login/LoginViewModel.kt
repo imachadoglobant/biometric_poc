@@ -31,31 +31,31 @@ class LoginViewModel @Inject constructor(
     private val biometricRepository: BiometricRepository
 ) : ViewModel() {
 
-    private val _uiState: MutableStateFlow<LoginUIState> = MutableStateFlow(
-        LoginUIState(
-            loggedIn = userRepository.isUserLoggedIn.value
-        )
-    )
+    private val _uiState: MutableStateFlow<LoginUIState> = MutableStateFlow(LoginUIState())
     val uiState: StateFlow<LoginUIState> = _uiState.asStateFlow()
 
     init {
         viewModelScope.launch {
             Timber.d("isUserLoggedIn")
-            userRepository.isUserLoggedIn
-                .map {
-                    Pair(it, biometricRepository.getBiometricInfo())
+            userRepository.state
+                .map { state ->
+                    Pair(state, biometricRepository.getBiometricInfo())
                 }
-                .collect {
-                    info -> reduceState(info.first, info.second)
+                .collect { info ->
+                    reduceState(
+                        token = info.first?.token,
+                        biometricInfo = info.second
+                    )
                 }
         }
     }
 
-    private suspend fun reduceState(isLoggedIn: Boolean, biometricInfo: BiometricInfo) {
+    private suspend fun reduceState(token: String?, biometricInfo: BiometricInfo) {
+        val isLoggedIn = token != null
         val currentState = uiState.value
         val askBiometricEnrollment =
             shouldAskTokenEnrollment(isLoggedIn, currentState, biometricInfo)
-        var authContext: AuthContext? = currentState.authContext
+        var authContext = currentState.authContext
         // we want to check if enrollment is ok or not
         if (askBiometricEnrollment) {
             getResult { prepareAuthContext(CryptoPurpose.Encryption) }
@@ -70,7 +70,7 @@ class LoginViewModel @Inject constructor(
         // update state
         _uiState.update {
             it.copy(
-                loggedIn = isLoggedIn,
+                token = token,
                 canLoginWithBiometry = canLoginWithBiometricToken(biometricInfo),
                 askBiometricEnrollment = askBiometricEnrollment,
                 authContext = authContext
@@ -91,8 +91,9 @@ class LoginViewModel @Inject constructor(
         && biometricInfo.canAskAuthentication())
 
     private suspend fun startBiometricTokenEnrollment(cryptoObject: CryptoObject) {
+        val token = _uiState.value.token.orEmpty()
         val result = getResult {
-            biometricRepository.fetchAndStoreEncryptedToken(cryptoObject)
+            biometricRepository.fetchAndStoreEncryptedToken(cryptoObject, token)
         }
         result.switch(
             success = {

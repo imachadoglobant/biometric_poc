@@ -2,6 +2,7 @@ package com.sample.biometric.ui.screen.login
 
 import androidx.biometric.BiometricPrompt
 import androidx.biometric.BiometricPrompt.AuthenticationCallback
+import androidx.biometric.BiometricPrompt.AuthenticationResult
 import androidx.biometric.BiometricPrompt.PromptInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,7 +29,7 @@ fun BiometricPromptContainer(
                 onAuthError(AuthError(errorCode, errString.toString()))
             }
 
-            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+            override fun onAuthenticationSucceeded(result: AuthenticationResult) {
                 Timber.d("onAuthenticationSucceeded")
                 state.resetShowFlag()
                 onAuthSucceeded(result.cryptoObject)

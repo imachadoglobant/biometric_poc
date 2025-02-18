@@ -25,7 +25,7 @@ interface BiometricRepository {
      * @throws com.sample.biometric.data.error.InvalidCryptoLayerException if
      * crypto layer is invalid
      */
-    suspend fun fetchAndStoreEncryptedToken(cryptoObject: CryptoObject)
+    suspend fun fetchAndStoreEncryptedToken(cryptoObject: CryptoObject, token: String)
 
     /**
      * Decrypt the token using the [cryptoObject] passed as parameter

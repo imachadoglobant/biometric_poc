@@ -1,38 +1,49 @@
 package com.sample.biometric.di
 
+import android.content.Context
 import androidx.biometric.BiometricManager
 import com.sample.biometric.data.BiometricRepository
+import com.sample.biometric.data.PreferenceRepository
 import com.sample.biometric.data.UserRepository
 import com.sample.biometric.data.crypto.CryptoEngine
 import com.sample.biometric.data.impl.BiometricRepositoryImpl
 import com.sample.biometric.data.impl.UserRepositoryImpl
-import com.sample.biometric.data.storage.KeyValueStorage
+import com.sample.biometric.data.impl.PreferenceRepositoryImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object RepoModule {
+object RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideUserRepository(keyValueStorage: KeyValueStorage): UserRepository {
-        return UserRepositoryImpl(keyValueStorage)
+    fun providePreferenceRepository(
+        @ApplicationContext context: Context
+    ): PreferenceRepository {
+        return PreferenceRepositoryImpl(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideUserRepository(preferenceRepository: PreferenceRepository): UserRepository {
+        return UserRepositoryImpl(preferenceRepository)
     }
 
     @Provides
     @Singleton
     fun provideTokenRepository(
         biometricManager: BiometricManager,
-        keyValueStorage: KeyValueStorage,
+        preferenceRepository: PreferenceRepository,
         cryptoEngine: CryptoEngine
     ): BiometricRepository {
         return BiometricRepositoryImpl(
             biometricManager = biometricManager,
-            keyValueStorage = keyValueStorage,
+            preferenceRepository = preferenceRepository,
             cryptoEngine = cryptoEngine
         )
     }

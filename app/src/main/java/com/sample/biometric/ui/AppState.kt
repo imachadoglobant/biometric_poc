@@ -24,15 +24,15 @@ class AppState(
     private val coroutineScope: CoroutineScope,
     private val resources: Resources,
     private val snackbarManager: SnackbarManager,
-){
+) {
     init {
         coroutineScope.launch {
             snackbarManager.messages.collect { currentMessages ->
                 if (currentMessages.isNotEmpty()) {
                     val message = currentMessages[0]
-                    val text = if(message.messageResId != null) {
+                    val text = if (message.messageResId != null) {
                         resources.getText(message.messageResId)
-                    }else{
+                    } else {
                         message.messageText
                     }
 
