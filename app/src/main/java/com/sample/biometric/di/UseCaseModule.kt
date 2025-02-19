@@ -9,7 +9,7 @@ import com.sample.biometric.domain.usecases.InitBiometricContextUseCase
 import com.sample.biometric.domain.usecases.LoginWithTokenUseCase
 import com.sample.biometric.domain.usecases.LoginWithUsernameUseCase
 import com.sample.biometric.domain.usecases.LogoutUseCase
-import com.sample.biometric.domain.usecases.StartBiometricEnrollmentUseCase
+import com.sample.biometric.domain.usecases.SaveBiometricDataUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -47,33 +47,37 @@ object UseCaseModule {
     @Provides
     @Singleton
     fun provideGetBiometricStatusUseCase(
-        biometricRepository: BiometricRepository
+        biometricRepository: BiometricRepository,
+        userRepository: UserRepository
     ): GetBiometricStatusUseCase {
-        return GetBiometricStatusUseCase(biometricRepository)
+        return GetBiometricStatusUseCase(biometricRepository, userRepository)
     }
 
     @Provides
     @Singleton
     fun provideGetBiometricTokenUseCase(
-        biometricRepository: BiometricRepository
+        biometricRepository: BiometricRepository,
+        userRepository: UserRepository
     ): GetBiometricTokenUseCase {
-        return GetBiometricTokenUseCase(biometricRepository)
+        return GetBiometricTokenUseCase(biometricRepository, userRepository)
     }
 
     @Provides
     @Singleton
     fun provideInitBiometricContextUseCase(
-        biometricRepository: BiometricRepository
+        biometricRepository: BiometricRepository,
+        userRepository: UserRepository
     ): InitBiometricContextUseCase {
-        return InitBiometricContextUseCase(biometricRepository)
+        return InitBiometricContextUseCase(biometricRepository, userRepository)
     }
 
     @Provides
     @Singleton
-    fun provideStartBiometricEnrollmentUseCase(
-        biometricRepository: BiometricRepository
-    ): StartBiometricEnrollmentUseCase {
-        return StartBiometricEnrollmentUseCase(biometricRepository)
+    fun provideSaveBiometricDataUseCase(
+        biometricRepository: BiometricRepository,
+        userRepository: UserRepository
+    ): SaveBiometricDataUseCase {
+        return SaveBiometricDataUseCase(biometricRepository, userRepository)
     }
 
 

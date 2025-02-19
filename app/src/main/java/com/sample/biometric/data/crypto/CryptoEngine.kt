@@ -7,6 +7,7 @@ import android.security.keystore.KeyProperties.ENCRYPTION_PADDING_PKCS7
 import android.security.keystore.KeyProperties.KEY_ALGORITHM_AES
 import android.security.keystore.KeyProperties.PURPOSE_DECRYPT
 import android.security.keystore.KeyProperties.PURPOSE_ENCRYPT
+import android.util.Base64
 import androidx.biometric.BiometricPrompt.CryptoObject
 import com.sample.biometric.data.model.CryptoPurpose
 import com.sample.biometric.data.crypto.ValidationResult.KEY_INIT_FAIL
@@ -128,9 +129,11 @@ class CryptoEngine {
         val tokenData = clearText.toByteArray(UTF_8)
         val encryptedData = cipher.doFinal(tokenData)
         val iv = cipher.iv
+        val dataBase64 = Base64.encodeToString(encryptedData, Base64.DEFAULT)
+        val ivBase64 = Base64.encodeToString(iv, Base64.DEFAULT)
         return EncryptDataResult(
-            data = encryptedData,
-            iv = iv
+            data = dataBase64,
+            iv = ivBase64
         )
     }
 

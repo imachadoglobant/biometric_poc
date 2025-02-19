@@ -16,7 +16,7 @@ import com.sample.biometric.domain.usecases.GetUserUseCase
 import com.sample.biometric.domain.usecases.InitBiometricContextUseCase
 import com.sample.biometric.domain.usecases.LoginWithTokenUseCase
 import com.sample.biometric.domain.usecases.LoginWithUsernameUseCase
-import com.sample.biometric.domain.usecases.StartBiometricEnrollmentUseCase
+import com.sample.biometric.domain.usecases.SaveBiometricDataUseCase
 import com.sample.biometric.domain.DomainResult
 import com.sample.biometric.ui.ViewState
 import com.sample.biometric.ui.screen.biometric.BiometricContext
@@ -37,7 +37,7 @@ class LoginViewModel @Inject constructor(
     private val loginWithToken: LoginWithTokenUseCase,
     private val initBiometricContext: InitBiometricContextUseCase,
     private val getBiometricStatus: GetBiometricStatusUseCase,
-    private val startBiometricEnrollment: StartBiometricEnrollmentUseCase,
+    private val saveBiometricData: SaveBiometricDataUseCase,
     private val getBiometricToken: GetBiometricTokenUseCase
 ) : ViewModel() {
 
@@ -69,7 +69,7 @@ class LoginViewModel @Inject constructor(
 
     private suspend fun startBiometricTokenEnrollment(cryptoObject: CryptoObject) {
         val token = _uiState.value.successDataOrNull()?.token.orEmpty()
-        when (val result = startBiometricEnrollment(cryptoObject, token)) {
+        when (val result = saveBiometricData(cryptoObject, token)) {
             is DomainResult.Loading -> {
                 // Show loading
             }

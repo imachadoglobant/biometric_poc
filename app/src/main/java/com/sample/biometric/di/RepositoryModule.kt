@@ -7,8 +7,8 @@ import com.sample.biometric.data.PreferenceRepository
 import com.sample.biometric.data.UserRepository
 import com.sample.biometric.data.crypto.CryptoEngine
 import com.sample.biometric.data.impl.BiometricRepositoryImpl
-import com.sample.biometric.data.impl.UserRepositoryImpl
 import com.sample.biometric.data.impl.PreferenceRepositoryImpl
+import com.sample.biometric.data.impl.UserRepositoryImpl
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -38,12 +38,10 @@ object RepositoryModule {
     @Singleton
     fun provideTokenRepository(
         biometricManager: BiometricManager,
-        preferenceRepository: PreferenceRepository,
         cryptoEngine: CryptoEngine
     ): BiometricRepository {
         return BiometricRepositoryImpl(
             biometricManager = biometricManager,
-            preferenceRepository = preferenceRepository,
             cryptoEngine = cryptoEngine
         )
     }
