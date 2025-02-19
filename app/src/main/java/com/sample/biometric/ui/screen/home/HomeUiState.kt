@@ -1,5 +1,5 @@
 package com.sample.biometric.ui.screen.home
 
 data class HomeUiState(
-    val loggedIn: Boolean = false
+    val loggedIn: Boolean = true
 )

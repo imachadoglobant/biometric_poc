@@ -1,10 +1,9 @@
 package com.sample.biometric.data
 
-import android.provider.ContactsContract.Data
 import androidx.biometric.BiometricPrompt.CryptoObject
 import com.sample.biometric.common.DataResult
 import com.sample.biometric.data.model.CryptoPurpose
-import com.sample.biometric.data.model.BiometricInfo
+import com.sample.biometric.data.model.BiometricStatus
 
 /**
  * Represent the repository for our biometric related data / info
@@ -18,7 +17,7 @@ interface BiometricRepository {
      *
      * @return the biometric info object
      */
-    suspend fun getBiometricInfo(): BiometricInfo
+    suspend fun getBiometricStatus(): BiometricStatus
 
     /**
      * Store the token using the [cryptoObject] passed as parameter.
@@ -27,7 +26,7 @@ interface BiometricRepository {
      * @throws com.sample.biometric.data.error.InvalidCryptoLayerException if
      * crypto layer is invalid
      */
-    suspend fun fetchAndStoreEncryptedToken(
+    suspend fun storeEncryptedToken(
         cryptoObject: CryptoObject,
         token: String
     ): DataResult<Unit>

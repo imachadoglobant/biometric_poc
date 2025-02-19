@@ -24,11 +24,12 @@ import com.sample.biometric.data.model.BiometricAuthStatus
 import com.sample.biometric.data.model.BiometricAuthStatus.AVAILABLE_BUT_NOT_ENROLLED
 import com.sample.biometric.data.model.BiometricAuthStatus.NOT_AVAILABLE
 import com.sample.biometric.data.model.BiometricAuthStatus.TEMPORARY_NOT_AVAILABLE
-import com.sample.biometric.data.model.BiometricInfo
-import com.sample.biometric.data.model.BiometricInfo.KeyStatus.INVALIDATED
-import com.sample.biometric.data.model.BiometricInfo.KeyStatus.NOT_READY
+import com.sample.biometric.data.model.BiometricStatus
+import com.sample.biometric.data.model.KeyStatus.INVALIDATED
+import com.sample.biometric.data.model.KeyStatus.NOT_READY
 import com.sample.biometric.data.model.CryptoPurpose
 import com.sample.biometric.data.model.CryptoPurpose.Decryption
+import com.sample.biometric.data.model.KeyStatus
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -47,7 +48,7 @@ class BiometricRepositoryImpl(
         const val BIOMETRIC_IV_KEY = "BIOMETRIC_TOKEN_IV"
     }
 
-    override suspend fun getBiometricInfo(): BiometricInfo = withContext(dispatcher) {
+    override suspend fun getBiometricStatus(): BiometricStatus = withContext(dispatcher) {
         val biometricAuthStatus = readBiometricAuthStatus()
         Timber.d("biometricAuthStatus=$biometricAuthStatus")
         val cryptoValidationResult = checkInternalWithCrypto()
@@ -55,32 +56,33 @@ class BiometricRepositoryImpl(
         val isBiometricTokenPresent = isTokenPresent()
         Timber.d("isBiometricTokenPresent=$isBiometricTokenPresent")
 
-        BiometricInfo(
+        BiometricStatus(
             biometricTokenPresent = isBiometricTokenPresent,
             biometricAuthStatus = biometricAuthStatus,
             keyStatus = when (cryptoValidationResult) {
-                OK -> BiometricInfo.KeyStatus.READY
+                OK -> KeyStatus.READY
                 KEY_INIT_FAIL, VALIDATION_FAILED -> NOT_READY
                 KEY_PERMANENTLY_INVALIDATED -> INVALIDATED
             }
         )
     }
 
-    override suspend fun fetchAndStoreEncryptedToken(
+    override suspend fun storeEncryptedToken(
         cryptoObject: CryptoObject,
         token: String
     ) = withContext(dispatcher) {
         val error = validateCryptoLayer() as? Error
         if (error != null) return@withContext error
-        // 2. encrypt the data using the cipher inside the cryptoObject
+
+        // 1. encrypt the data using the cipher inside the cryptoObject
         val encryptedData = cryptoEngine.encrypt(token, cryptoObject)
-        // 3. Store encrypted data and iv.
+        // 2. Store encrypted data and iv.
         encryptedData?.iv?.let { iv ->
             storeDataAndIv(encryptedData.data, iv)
             return@withContext Success(Unit)
         } ?: run {
             Timber.e("encryptedData or iv are null")
-            return@withContext Error()
+            return@withContext Error(NullPointerException("encryptedData or iv are null"))
         }
     }
 

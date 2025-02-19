@@ -21,6 +21,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import com.sample.biometric.R
+import com.sample.biometric.ui.ViewState
 import com.sample.biometric.ui.navigation.HomeRoute
 import com.sample.biometric.ui.navigation.LoginRoute
 
@@ -30,9 +31,14 @@ fun HomeScreen(
     onLogoutDone: () -> Unit = {}
 ) {
 
-    val uiState: HomeUiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState: ViewState<HomeUiState> by viewModel.uiState.collectAsStateWithLifecycle()
+    val successState = (uiState as? ViewState.Success)?.data
 
-    if (!uiState.loggedIn) {
+    LaunchedEffect(key1 = Unit) {
+        viewModel.loadData()
+    }
+
+    if (successState?.loggedIn == false) {
         LaunchedEffect(key1 = Unit) {
             onLogoutDone()
         }

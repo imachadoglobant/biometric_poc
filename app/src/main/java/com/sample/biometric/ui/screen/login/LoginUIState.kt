@@ -28,7 +28,7 @@ data class LoginUIState (
     val biometricContext: BiometricContext? = null,
 ) {
 
-    val isAuthenticated = token != null
+    val isAuthenticated = token?.isNotEmpty() == true
 
 }
 

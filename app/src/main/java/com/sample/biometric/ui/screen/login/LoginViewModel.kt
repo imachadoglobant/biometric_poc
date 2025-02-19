@@ -6,18 +6,19 @@ import androidx.biometric.BiometricPrompt.CryptoObject
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sample.biometric.R
-import com.sample.biometric.common.DataResult
-import com.sample.biometric.common.DataResult.Error
-import com.sample.biometric.common.DataResult.Loading
-import com.sample.biometric.common.DataResult.Success
-import com.sample.biometric.data.BiometricRepository
 import com.sample.biometric.data.error.InvalidCryptoLayerException
-import com.sample.biometric.data.model.BiometricInfo
-import com.sample.biometric.data.model.CryptoPurpose
+import com.sample.biometric.data.model.BiometricStatus
 import com.sample.biometric.data.model.CryptoPurpose.Decryption
+import com.sample.biometric.data.model.CryptoPurpose.Encryption
+import com.sample.biometric.domain.usecases.GetBiometricStatusUseCase
+import com.sample.biometric.domain.usecases.GetBiometricTokenUseCase
 import com.sample.biometric.domain.usecases.GetUserUseCase
+import com.sample.biometric.domain.usecases.InitBiometricContextUseCase
 import com.sample.biometric.domain.usecases.LoginWithTokenUseCase
 import com.sample.biometric.domain.usecases.LoginWithUsernameUseCase
+import com.sample.biometric.domain.usecases.StartBiometricEnrollmentUseCase
+import com.sample.biometric.domain.DomainResult
+import com.sample.biometric.ui.ViewState
 import com.sample.biometric.ui.screen.biometric.BiometricContext
 import com.sample.biometric.ui.snackbar.SnackbarManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,69 +35,47 @@ class LoginViewModel @Inject constructor(
     private val getUser: GetUserUseCase,
     private val loginWithUsername: LoginWithUsernameUseCase,
     private val loginWithToken: LoginWithTokenUseCase,
-    private val biometricRepository: BiometricRepository
+    private val initBiometricContext: InitBiometricContextUseCase,
+    private val getBiometricStatus: GetBiometricStatusUseCase,
+    private val startBiometricEnrollment: StartBiometricEnrollmentUseCase,
+    private val getBiometricToken: GetBiometricTokenUseCase
 ) : ViewModel() {
 
-    private val _uiState: MutableStateFlow<LoginUIState> = MutableStateFlow(LoginUIState())
-    val uiState: StateFlow<LoginUIState> = _uiState.asStateFlow()
+    private val _uiState: MutableStateFlow<ViewState<LoginUIState>> =
+        MutableStateFlow(ViewState.Initial)
+    val uiState: StateFlow<ViewState<LoginUIState>> = _uiState.asStateFlow()
 
-    init {
-        viewModelScope.launch {
-            initState()
-        }
-    }
-
-    private suspend fun initState() {
+    fun loadData() = viewModelScope.launch {
+        if (_uiState.value !is ViewState.Initial) return@launch
         val token = getUser().successDataOrNull()?.token
-        val isLoggedIn = token?.isNotBlank() == true
-        Timber.d("isUserLoggedIn=$isLoggedIn")
-        val biometricInfo = biometricRepository.getBiometricInfo()
+        Timber.d("token=$token")
 
-        val currentState = uiState.value
-        val askBiometricEnrollment =
-            shouldAskTokenEnrollment(isLoggedIn, currentState, biometricInfo)
-        var authContext = currentState.biometricContext
-
-        // we want to check if enrollment is ok or not
-        if (askBiometricEnrollment) {
-            when (val result = prepareAuthContext(CryptoPurpose.Encryption)) {
-                is Loading -> {
-                    // Show loading
-                }
-                is Error -> Timber.e(result.exception)
-                is Success -> authContext = result.data
-            }
-        }
         _uiState.update {
-            it.copy(
-                token = token,
-                canLoginWithBiometry = canLoginWithBiometricToken(biometricInfo),
-                askBiometricEnrollment = askBiometricEnrollment,
-                biometricContext = authContext
+            ViewState.Success(
+                LoginUIState(
+                    token = token
+                )
             )
         }
     }
 
-    private fun canLoginWithBiometricToken(biometricInfo: BiometricInfo) =
-        biometricInfo.biometricTokenPresent && biometricInfo.canAskAuthentication()
-
     private fun shouldAskTokenEnrollment(
         isLoggedIn: Boolean,
-        currentState: LoginUIState,
-        biometricInfo: BiometricInfo
+        biometricStatus: BiometricStatus
     ) = isLoggedIn
-        && !currentState.askBiometricEnrollment
-        && !biometricInfo.biometricTokenPresent
-        && biometricInfo.canAskAuthentication()
+        && _uiState.value.successDataOrNull()?.askBiometricEnrollment == false
+        && !biometricStatus.biometricTokenPresent
+        && biometricStatus.canAskAuthentication()
 
     private suspend fun startBiometricTokenEnrollment(cryptoObject: CryptoObject) {
-        val token = _uiState.value.token.orEmpty()
-        when (val result = biometricRepository.fetchAndStoreEncryptedToken(cryptoObject, token)) {
-            is Loading -> {
-                // Show progress
+        val token = _uiState.value.successDataOrNull()?.token.orEmpty()
+        when (val result = startBiometricEnrollment(cryptoObject, token)) {
+            is DomainResult.Loading -> {
+                // Show loading
             }
-            is Error -> {
-                result.exception?.let { e ->
+
+            is DomainResult.Error -> {
+                result.exception.let { e ->
                     if (e is InvalidCryptoLayerException) {
                         handleInvalidCryptoException(e, false)
                     } else {
@@ -104,54 +83,56 @@ class LoginViewModel @Inject constructor(
                     }
                 }
             }
-            is Success -> {
+
+            is DomainResult.Success -> {
                 Timber.i("fetchAndStoreEncryptedToken done")
             }
         }
     }
 
-    private suspend fun startLoginWithToken(cryptoObject: CryptoObject) {
-        val tokenAsCredential =
-            (biometricRepository.decryptToken(cryptoObject) as? Success?)?.data ?: run {
-                // Handle resiliency
-                Timber.e("startLoginWithToken cryptoObject is null")
-                return
-            }
+    private suspend fun startLoginWithToken(cryptoObject: CryptoObject) =
         viewModelScope.launch {
-            when (val result = loginWithToken(tokenAsCredential)) {
-                is Loading -> {
-                    // Show progress indicator
+            when (val result = getBiometricToken(cryptoObject)) {
+                is DomainResult.Loading -> {
+                    // Show loading
                 }
 
-                is Error -> {
-                    if (result.exception is InvalidCryptoLayerException) {
-                        _uiState.update { it.copy(canLoginWithBiometry = false) }
-                    } else {
-                        handleError(result.exception)
+                is DomainResult.Error -> {
+                    // Handle resiliency
+                    Timber.e("startLoginWithToken cryptoObject is null")
+                    handleError(result.exception)
+                }
+
+                is DomainResult.Success -> {
+                    val token = result.data ?: run {
+                        return@launch handleError(NullPointerException("token is null"))
                     }
-                }
-
-                is Success -> {
-                    Timber.d("Login Done")
+                    doLoginWithToken(token)
                 }
             }
         }
-    }
 
-    private suspend fun prepareAuthContext(purpose: CryptoPurpose): DataResult<BiometricContext> {
-        return when (val result = biometricRepository.createCryptoObject(purpose)) {
-            is Success -> {
-                val cryptoObject = result.data ?: return Error()
-                Success(
-                    BiometricContext(
-                        purpose = purpose,
-                        cryptoObject = cryptoObject
-                    )
-                )
+    private fun doLoginWithToken(token: String) = viewModelScope.launch {
+        when (val result = loginWithToken(token)) {
+            is DomainResult.Loading -> {
+                // Show loading
             }
 
-            else -> {
-                Error((result as? Error)?.exception)
+            is DomainResult.Error -> {
+                if (result.exception is InvalidCryptoLayerException) {
+                    val state = _uiState.value.successDataOrNull() ?: return@launch
+                    _uiState.update {
+                        ViewState.Success(
+                            state.copy(canLoginWithBiometry = false)
+                        )
+                    }
+                } else {
+                    handleError(result.exception)
+                }
+            }
+
+            is DomainResult.Success -> {
+                Timber.d("Login Done")
             }
         }
     }
@@ -176,9 +157,12 @@ class LoginViewModel @Inject constructor(
             SnackbarManager.showMessage(R.string.msg_error_generic)
         }
         if (isLogin) {
+            val state = _uiState.value.successDataOrNull() ?: return
             //update to inform ui that login with biometry is not available
             _uiState.update {
-                it.copy(canLoginWithBiometry = false)
+                ViewState.Success(
+                    state.copy(canLoginWithBiometry = false)
+                )
             }
         }
     }
@@ -191,26 +175,79 @@ class LoginViewModel @Inject constructor(
         SnackbarManager.showMessage(messageTextId)
     }
 
+    private fun initBiometric(token: String?) = viewModelScope.launch {
+        val isLoggedIn = token?.isNotBlank() == true
+        Timber.d("isUserLoggedIn=$isLoggedIn")
+        val biometricStatus = getBiometricStatus()
+
+        val askBiometricEnrollment = shouldAskTokenEnrollment(isLoggedIn, biometricStatus)
+        Timber.d("askBiometricEnrollment=$askBiometricEnrollment")
+        var authContext: BiometricContext? = null
+        Timber.d("canLoginWithBiometry=${biometricStatus.canLoginWithBiometricToken()}")
+
+        // we want to check if enrollment is ok or not
+        if (askBiometricEnrollment) {
+            when (val result = initBiometricContext(Encryption)) {
+                is DomainResult.Loading -> {
+                    // Show loading
+                }
+
+                is DomainResult.Error -> Timber.e(result.exception)
+
+                is DomainResult.Success -> authContext = result.data
+            }
+        }
+        _uiState.update {
+            ViewState.Success(
+                LoginUIState(
+                    token = token,
+                    canLoginWithBiometry = biometricStatus.canLoginWithBiometricToken(),
+                    askBiometricEnrollment = askBiometricEnrollment,
+                    biometricContext = authContext
+                )
+            )
+        }
+    }
+
     fun setUsername(username: String) {
-        _uiState.value = _uiState.value.copy(usernameField = username)
+        val state = _uiState.value.successDataOrNull() ?: return
+        _uiState.update {
+            ViewState.Success(
+                state.copy(usernameField = username)
+            )
+        }
     }
 
     fun setPassword(password: String) {
-        _uiState.value = _uiState.value.copy(passwordField = password)
+        val state = _uiState.value.successDataOrNull() ?: return
+        _uiState.update {
+            ViewState.Success(
+                state.copy(passwordField = password)
+            )
+        }
     }
 
     fun doLogin() {
-        val username = _uiState.value.usernameField
-        val password = _uiState.value.passwordField
+        val state = _uiState.value.successDataOrNull() ?: return
+        val username = state.usernameField
+        val password = state.passwordField
         if (username.isBlank() || password.isBlank()) {
             showMessage(R.string.msg_error_username_password_required)
             return
         }
         viewModelScope.launch {
-            val result = loginWithUsername(username, password)
-            _uiState.update {
-                it.copy(token = result.token)
+            when (val result = loginWithUsername(username, password)) {
+                is DomainResult.Loading -> {
+                    // Show loading
+                }
+                is DomainResult.Error -> {
+                    // Handle resiliency
+                }
+                is DomainResult.Success -> {
+                    initBiometric(result.data?.token)
+                }
             }
+
         }
     }
 
@@ -226,41 +263,55 @@ class LoginViewModel @Inject constructor(
                 showMessage(errString)
             }
         }
-        _uiState.update { it.copy(askBiometricEnrollment = false, biometricContext = null) }
+
+        val state = _uiState.value.successDataOrNull() ?: return
+        _uiState.update {
+            ViewState.Success(
+                state.copy(
+                    askBiometricEnrollment = false,
+                    biometricContext = null
+                )
+            )
+        }
     }
 
     fun onAuthSucceeded(cryptoObject: CryptoObject?) {
+        if (cryptoObject == null) {
+            Timber.e("cryptoObject is null")
+            return
+        }
+
         Timber.i("On Auth Succeeded $cryptoObject")
-        val pendingAuthContext = uiState.value.biometricContext
+        val state = _uiState.value.successDataOrNull() ?: return
+
         _uiState.update {
-            it.copy(
-                askBiometricEnrollment = false,
-                biometricContext = null
+            ViewState.Success(
+                state.copy(
+                    askBiometricEnrollment = false,
+                    biometricContext = null
+                )
             )
         }
+
         viewModelScope.launch {
-            pendingAuthContext?.let { authContext ->
-                if (cryptoObject == null) {
-                    Timber.e("cryptoObject is null")
-                    return@launch
-                }
-                if (authContext.purpose == CryptoPurpose.Encryption) {
+            state.biometricContext?.let { authContext ->
+                if (authContext.purpose == Encryption) {
                     startBiometricTokenEnrollment(cryptoObject)
                 } else {
                     startLoginWithToken(cryptoObject)
                 }
             }
-
         }
     }
 
     fun requireBiometricLogin() {
         viewModelScope.launch {
-            when (val result = prepareAuthContext(Decryption)) {
-                is Loading -> {
-                    // Show progress
+            when (val result = initBiometricContext(Decryption)) {
+                is DomainResult.Loading -> {
+                    // Show loading
                 }
-                is Error -> {
+
+                is DomainResult.Error -> {
                     result.exception?.let { e ->
                         if (e is InvalidCryptoLayerException) {
                             handleInvalidCryptoException(e, true)
@@ -269,11 +320,16 @@ class LoginViewModel @Inject constructor(
                         }
                     }
                 }
-                is Success -> {
+
+                is DomainResult.Success -> {
+                    val state = (_uiState.value as? ViewState.Success)?.data ?: return@launch
+
                     _uiState.update {
-                        it.copy(
-                            askBiometricEnrollment = false,
-                            biometricContext = result.data
+                        ViewState.Success(
+                            state.copy(
+                                askBiometricEnrollment = false,
+                                biometricContext = result.data
+                            )
                         )
                     }
                 }

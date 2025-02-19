@@ -36,6 +36,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import com.sample.biometric.R
+import com.sample.biometric.ui.ViewState
 import com.sample.biometric.ui.navigation.HomeRoute
 import com.sample.biometric.ui.navigation.LoginRoute
 import com.sample.biometric.ui.screen.biometric.BiometricPromptContainer
@@ -48,11 +49,16 @@ fun LoginScreen(
     viewModel: LoginViewModel = hiltViewModel(),
     onUserLoginReady: () -> Unit = {},
 ) {
-    val uiState: LoginUIState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState: ViewState<LoginUIState> by viewModel.uiState.collectAsStateWithLifecycle()
+    val successState = (uiState as? ViewState.Success)?.data
     val navigateToHome by remember(uiState) {
-        derivedStateOf { uiState.isAuthenticated && !uiState.askBiometricEnrollment }
+        derivedStateOf { successState?.isAuthenticated == true && !successState.askBiometricEnrollment }
     }
     val focusManager = LocalFocusManager.current
+
+    LaunchedEffect(key1 = Unit) {
+        viewModel.loadData()
+    }
 
     if (navigateToHome) {
         LaunchedEffect(key1 = Unit) {
@@ -63,15 +69,15 @@ fun LoginScreen(
     val promptContainerState = rememberPromptContainerState()
     BiometricPromptContainer(
         state = promptContainerState,
-        onAuthSucceeded = { cryptoObj ->
-            viewModel.onAuthSucceeded(cryptoObj)
+        onAuthSucceeded = { cryptoObject ->
+            viewModel.onAuthSucceeded(cryptoObject)
         },
         onAuthError = { authErr ->
             viewModel.onAuthError(authErr.errorCode, authErr.errString)
         }
     )
 
-    uiState.biometricContext?.let { auth ->
+    successState?.biometricContext?.let { auth ->
         val resources = LocalContext.current.resources
         LaunchedEffect(key1 = auth) {
             val promptInfo = createPromptInfo(auth.purpose, resources)
@@ -84,19 +90,20 @@ fun LoginScreen(
         horizontalAlignment = CenterHorizontally,
     ) {
         OutlinedTextField(
-            value = uiState.usernameField,
+            value = successState?.usernameField.orEmpty(),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             placeholder = {
                 Text(text = stringResource(id = R.string.username_placeholder))
             },
             onValueChange = {
                 viewModel.setUsername(it)
-            })
+            }
+        )
 
         FormSpacer()
 
         OutlinedTextField(
-            value = uiState.passwordField,
+            value = successState?.passwordField.orEmpty(),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(
                 onDone = {
@@ -126,7 +133,7 @@ fun LoginScreen(
         FormSpacer()
 
         UseBiometricLoginButton(
-            visible = uiState.canLoginWithBiometry,
+            visible = successState?.canLoginWithBiometry == true,
             onClick = {
                 viewModel.requireBiometricLogin()
             }

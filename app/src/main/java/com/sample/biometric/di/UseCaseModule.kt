@@ -1,10 +1,15 @@
 package com.sample.biometric.di
 
+import com.sample.biometric.data.BiometricRepository
 import com.sample.biometric.data.UserRepository
+import com.sample.biometric.domain.usecases.GetBiometricStatusUseCase
+import com.sample.biometric.domain.usecases.GetBiometricTokenUseCase
 import com.sample.biometric.domain.usecases.GetUserUseCase
+import com.sample.biometric.domain.usecases.InitBiometricContextUseCase
 import com.sample.biometric.domain.usecases.LoginWithTokenUseCase
 import com.sample.biometric.domain.usecases.LoginWithUsernameUseCase
 import com.sample.biometric.domain.usecases.LogoutUseCase
+import com.sample.biometric.domain.usecases.StartBiometricEnrollmentUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -38,5 +43,38 @@ object UseCaseModule {
     fun provideLogoutUseCase(userRepository: UserRepository): LogoutUseCase {
         return LogoutUseCase(userRepository)
     }
+
+    @Provides
+    @Singleton
+    fun provideGetBiometricStatusUseCase(
+        biometricRepository: BiometricRepository
+    ): GetBiometricStatusUseCase {
+        return GetBiometricStatusUseCase(biometricRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGetBiometricTokenUseCase(
+        biometricRepository: BiometricRepository
+    ): GetBiometricTokenUseCase {
+        return GetBiometricTokenUseCase(biometricRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideInitBiometricContextUseCase(
+        biometricRepository: BiometricRepository
+    ): InitBiometricContextUseCase {
+        return InitBiometricContextUseCase(biometricRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideStartBiometricEnrollmentUseCase(
+        biometricRepository: BiometricRepository
+    ): StartBiometricEnrollmentUseCase {
+        return StartBiometricEnrollmentUseCase(biometricRepository)
+    }
+
 
 }
