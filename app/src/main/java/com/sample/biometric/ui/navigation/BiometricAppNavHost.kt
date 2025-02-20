@@ -20,7 +20,7 @@ fun BiometricAppNavHost(
         modifier = modifier,
         navController = navController,
         startDestination = startDestination,
-    ){
+    ) {
         addLoginRoute(navController)
         addHomeRoute(navController)
     }

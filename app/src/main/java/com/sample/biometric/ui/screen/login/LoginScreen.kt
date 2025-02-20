@@ -29,7 +29,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -39,6 +38,7 @@ import com.sample.biometric.R
 import com.sample.biometric.ui.ViewState
 import com.sample.biometric.ui.navigation.HomeRoute
 import com.sample.biometric.ui.navigation.LoginRoute
+import com.sample.biometric.ui.retrieveViewModel
 import com.sample.biometric.ui.screen.biometric.BiometricPromptContainer
 import com.sample.biometric.ui.screen.biometric.createPromptInfo
 import com.sample.biometric.ui.screen.biometric.rememberPromptContainerState
@@ -46,7 +46,7 @@ import com.sample.biometric.ui.screen.biometric.rememberPromptContainerState
 @Composable
 fun LoginScreen(
     modifier: Modifier = Modifier,
-    viewModel: LoginViewModel = hiltViewModel(),
+    viewModel: LoginViewModel = retrieveViewModel<LoginViewModel>(),
     onUserLoginReady: () -> Unit = {},
 ) {
     val uiState: ViewState<LoginState> by viewModel.uiState.collectAsStateWithLifecycle()
@@ -174,10 +174,8 @@ fun NavGraphBuilder.addLoginRoute(navController: NavController) {
     composable(
         route = LoginRoute.route
     ) {
-        val viewModel: LoginViewModel = hiltViewModel()
         LoginScreen(
             modifier = Modifier.fillMaxSize(),
-            viewModel = viewModel,
             onUserLoginReady = {
                 navController.navigate(
                     route = HomeRoute.route,

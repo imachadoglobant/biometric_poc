@@ -6,7 +6,6 @@ import com.sample.biometric.domain.usecases.auth.ExpireTokenUseCase
 import com.sample.biometric.domain.usecases.auth.GetUserUseCase
 import com.sample.biometric.domain.usecases.auth.LogoutUseCase
 import com.sample.biometric.ui.ViewState
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,7 +14,6 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
-@HiltViewModel
 class HomeViewModel @Inject constructor(
     private val getUser: GetUserUseCase,
     private val expireToken: ExpireTokenUseCase,

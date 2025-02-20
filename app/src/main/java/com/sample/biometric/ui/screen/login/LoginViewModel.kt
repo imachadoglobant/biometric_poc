@@ -10,18 +10,17 @@ import com.sample.biometric.data.error.InvalidCryptoLayerException
 import com.sample.biometric.data.model.BiometricStatus
 import com.sample.biometric.data.model.CryptoPurpose.Decryption
 import com.sample.biometric.data.model.CryptoPurpose.Encryption
-import com.sample.biometric.domain.usecases.biometric.GetBiometricStatusUseCase
-import com.sample.biometric.domain.usecases.biometric.GetBiometricTokenUseCase
+import com.sample.biometric.domain.DomainResult
 import com.sample.biometric.domain.usecases.auth.GetUserUseCase
-import com.sample.biometric.domain.usecases.biometric.InitBiometricContextUseCase
 import com.sample.biometric.domain.usecases.auth.LoginWithTokenUseCase
 import com.sample.biometric.domain.usecases.auth.LoginWithUsernameUseCase
+import com.sample.biometric.domain.usecases.biometric.GetBiometricStatusUseCase
+import com.sample.biometric.domain.usecases.biometric.GetBiometricTokenUseCase
+import com.sample.biometric.domain.usecases.biometric.InitBiometricContextUseCase
 import com.sample.biometric.domain.usecases.biometric.SaveBiometricDataUseCase
-import com.sample.biometric.domain.DomainResult
 import com.sample.biometric.ui.ViewState
 import com.sample.biometric.ui.screen.biometric.BiometricContext
 import com.sample.biometric.ui.snackbar.SnackbarManager
-import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,7 +29,6 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
-@HiltViewModel
 class LoginViewModel @Inject constructor(
     private val getUser: GetUserUseCase,
     private val loginWithUsername: LoginWithUsernameUseCase,

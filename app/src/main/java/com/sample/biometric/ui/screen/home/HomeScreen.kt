@@ -14,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -24,10 +23,11 @@ import com.sample.biometric.R
 import com.sample.biometric.ui.ViewState
 import com.sample.biometric.ui.navigation.HomeRoute
 import com.sample.biometric.ui.navigation.LoginRoute
+import com.sample.biometric.ui.retrieveViewModel
 
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel,
+    viewModel: HomeViewModel = retrieveViewModel<HomeViewModel>(),
     onLogoutDone: () -> Unit = {}
 ) {
 
@@ -76,9 +76,7 @@ fun NavGraphBuilder.addHomeRoute(navController: NavHostController) {
     composable(
         route = HomeRoute.route
     ) {
-        val viewModel: HomeViewModel = hiltViewModel()
         HomeScreen(
-            viewModel = viewModel,
             onLogoutDone = {
                 navController.navigate(
                     route = LoginRoute.route,

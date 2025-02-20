@@ -12,39 +12,32 @@ import com.sample.biometric.data.impl.PreferenceRepositoryImpl
 import com.sample.biometric.data.impl.UserRepositoryImpl
 import dagger.Module
 import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 @Module
-@InstallIn(SingletonComponent::class)
 object RepositoryModule {
 
     @Provides
     @Singleton
     fun providePreferenceRepository(
-        @ApplicationContext context: Context,
+        context: Context,
         cryptoManager: CryptoManager
-    ): PreferenceRepository {
-        return PreferenceRepositoryImpl(context, cryptoManager)
-    }
+    ) : PreferenceRepository =
+        PreferenceRepositoryImpl(context, cryptoManager)
 
     @Provides
     @Singleton
-    fun provideUserRepository(preferenceRepository: PreferenceRepository): UserRepository {
-        return UserRepositoryImpl(preferenceRepository)
-    }
+    fun provideUserRepository(preferenceRepository: PreferenceRepository) : UserRepository =
+        UserRepositoryImpl(preferenceRepository)
 
     @Provides
     @Singleton
     fun provideTokenRepository(
         biometricManager: BiometricManager,
         cryptoEngine: BiometricCryptoEngine
-    ): BiometricRepository {
-        return BiometricRepositoryImpl(
-            biometricManager = biometricManager,
-            cryptoEngine = cryptoEngine
-        )
-    }
+    ): BiometricRepository = BiometricRepositoryImpl(
+        biometricManager = biometricManager,
+        cryptoEngine = cryptoEngine
+    )
+
 }

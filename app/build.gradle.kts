@@ -2,7 +2,6 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     kotlin("kapt")
-    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -69,10 +68,12 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     // Navigation compose
     implementation("androidx.navigation:navigation-compose:2.6.0")
-    // Hilt & navigation compose
-    implementation("com.google.dagger:hilt-android:2.55")
-    kapt("com.google.dagger:hilt-compiler:2.51.1")
-    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    // Dagger 2
+    implementation ("com.google.dagger:dagger:2.43.2")
+    implementation ("com.google.dagger:dagger-android:2.43.2")
+    annotationProcessor("com.google.dagger:dagger-compiler:2.43.2")
+    kapt("com.google.dagger:dagger-compiler:2.43.2")
+    kapt("com.google.dagger:dagger-android-processor:2.43.2")
     // DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.2")
     // Biometric
