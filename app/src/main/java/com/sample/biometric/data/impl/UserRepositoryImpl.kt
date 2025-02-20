@@ -2,6 +2,7 @@ package com.sample.biometric.data.impl
 
 import com.sample.biometric.data.PreferenceRepository
 import com.sample.biometric.data.UserRepository
+import com.sample.biometric.data.model.UserData
 
 class UserRepositoryImpl(private val preferenceRepository: PreferenceRepository) : UserRepository {
 
@@ -13,9 +14,24 @@ class UserRepositoryImpl(private val preferenceRepository: PreferenceRepository)
         private const val BIOMETRIC_IV_KEY = "BIOMETRIC_TOKEN_IV"
     }
 
-    override suspend fun saveUser(username: String, token: String) {
+    override suspend fun saveUser(username: String, token: String): UserData {
         preferenceRepository.storeEncodedValue(USERNAME_KEY, username)
         preferenceRepository.storeValue(TOKEN_KEY, token)
+        preferenceRepository.storeValue(EXPIRED_TOKEN_KEY, "")
+
+        return UserData(
+            username = username,
+            token = token,
+            expiredToken = ""
+        )
+    }
+
+    override suspend fun getUser(): UserData {
+        return UserData(
+            username = preferenceRepository.getDecodedValue(USERNAME_KEY),
+            token = preferenceRepository.getValue(TOKEN_KEY),
+            expiredToken = preferenceRepository.getValue(EXPIRED_TOKEN_KEY)
+        )
     }
 
     override suspend fun saveBiometricData(biometricToken: String, iv: String) {
@@ -23,15 +39,7 @@ class UserRepositoryImpl(private val preferenceRepository: PreferenceRepository)
         preferenceRepository.storeValue(BIOMETRIC_IV_KEY, iv)
     }
 
-    override suspend fun getToken(): String {
-        return preferenceRepository.getValue(TOKEN_KEY)
-    }
-
-    override suspend fun getExpiredToken(): String {
-        return preferenceRepository.getValue(EXPIRED_TOKEN_KEY)
-    }
-
-    override suspend fun isTokenPresent(): Boolean =
+    override suspend fun isBiometricTokenPresent(): Boolean =
         preferenceRepository.contains(BIOMETRIC_TOKEN_KEY)
             && preferenceRepository.contains(BIOMETRIC_IV_KEY)
 
@@ -41,10 +49,6 @@ class UserRepositoryImpl(private val preferenceRepository: PreferenceRepository)
 
     override suspend fun getBiometricIv(): String {
         return preferenceRepository.getValue(BIOMETRIC_IV_KEY)
-    }
-
-    override suspend fun getUsername(): String {
-        return preferenceRepository.getDecodedValue(USERNAME_KEY)
     }
 
     override suspend fun expireToken() {

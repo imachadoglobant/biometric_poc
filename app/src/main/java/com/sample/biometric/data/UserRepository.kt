@@ -1,5 +1,7 @@
 package com.sample.biometric.data
 
+import com.sample.biometric.data.model.UserData
+
 /**
  * User repository
  */
@@ -8,7 +10,12 @@ interface UserRepository {
     /**
      * Store user info
      */
-    suspend fun saveUser(username: String, token: String)
+    suspend fun saveUser(username: String, token: String): UserData
+
+    /**
+     * Retrieves user info
+     */
+    suspend fun getUser(): UserData
 
     /**
      * Store user biometric info
@@ -16,19 +23,9 @@ interface UserRepository {
     suspend fun saveBiometricData(biometricToken: String, iv: String)
 
     /**
-     * Retrieve user token if authenticated
-     */
-    suspend fun getToken(): String
-
-    /**
-     * Retrieve user previous token
-     */
-    suspend fun getExpiredToken(): String
-
-    /**
      * True if biometric info has been previously stored
      */
-    suspend fun isTokenPresent(): Boolean
+    suspend fun isBiometricTokenPresent(): Boolean
 
     /**
      * Retrieve user biometric token if enrolled
@@ -39,10 +36,6 @@ interface UserRepository {
      * Retrieve user biometric IV if enrolled
      */
     suspend fun getBiometricIv(): String
-    /**
-     * Retrieve user name if authenticated
-     */
-    suspend fun getUsername(): String
 
     /**
      * Remove stored token

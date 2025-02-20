@@ -14,24 +14,17 @@ class LoginWithTokenUseCase(private val userRepository: UserRepository) {
 
     suspend operator fun invoke(token: String): DomainResult<UserData> {
         delay(DELAY)
-        val storedToken = userRepository.getExpiredToken()
+        var user = userRepository.getUser()
 
-        if (storedToken != token) {
+        if (user.expiredToken != token) {
             userRepository.logout()
             return DomainResult.Error(InvalidTokenException())
         }
 
-        val username = userRepository.getUsername()
         // Token should be refreshed here
-        userRepository.saveUser(username, storedToken)
+        user = userRepository.saveUser(user.username, token)
 
-        return DomainResult.Success(
-            UserData(
-                username = username,
-                token = token,
-                expiredToken = storedToken
-            )
-        )
+        return DomainResult.Success(user)
     }
 
 }

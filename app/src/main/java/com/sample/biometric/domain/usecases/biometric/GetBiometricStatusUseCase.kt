@@ -10,7 +10,7 @@ class GetBiometricStatusUseCase(
 ) {
 
     suspend operator fun invoke(): BiometricStatus {
-        return biometricRepository.getBiometricStatus(userRepository.isTokenPresent())
+        return biometricRepository.getBiometricStatus(userRepository.isBiometricTokenPresent())
     }
 
 }

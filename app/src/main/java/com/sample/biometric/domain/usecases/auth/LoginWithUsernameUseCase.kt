@@ -15,11 +15,7 @@ class LoginWithUsernameUseCase(private val userRepository: UserRepository) {
         userRepository.saveUser(username, token)
 
         return DomainResult.Success(
-            UserData(
-                username = username,
-                token = token,
-                expiredToken = userRepository.getExpiredToken()
-            )
+            userRepository.getUser()
         )
     }
 
