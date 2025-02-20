@@ -1,4 +1,4 @@
-package com.sample.biometric.domain.usecases
+package com.sample.biometric.domain.usecases.auth
 
 import com.sample.biometric.data.UserRepository
 import com.sample.biometric.data.model.UserData
@@ -17,7 +17,8 @@ class LoginWithUsernameUseCase(private val userRepository: UserRepository) {
         return DomainResult.Success(
             UserData(
                 username = username,
-                token = token
+                token = token,
+                expiredToken = userRepository.getExpiredToken()
             )
         )
     }

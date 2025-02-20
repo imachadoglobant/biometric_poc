@@ -1,4 +1,4 @@
-package com.sample.biometric.domain.usecases
+package com.sample.biometric.domain.usecases.auth
 
 import com.sample.biometric.data.UserRepository
 import com.sample.biometric.data.model.UserData
@@ -10,7 +10,8 @@ class GetUserUseCase(private val userRepository: UserRepository) {
     suspend operator fun invoke(): DomainResult<UserData> {
         val data = UserData(
             username = userRepository.getUsername(),
-            token = userRepository.getToken()
+            token = userRepository.getToken(),
+            expiredToken = userRepository.getExpiredToken()
         )
         Timber.d(data.toString())
         return DomainResult.Success(data)

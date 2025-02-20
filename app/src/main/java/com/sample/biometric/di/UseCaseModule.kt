@@ -2,14 +2,15 @@ package com.sample.biometric.di
 
 import com.sample.biometric.data.BiometricRepository
 import com.sample.biometric.data.UserRepository
-import com.sample.biometric.domain.usecases.GetBiometricStatusUseCase
-import com.sample.biometric.domain.usecases.GetBiometricTokenUseCase
-import com.sample.biometric.domain.usecases.GetUserUseCase
-import com.sample.biometric.domain.usecases.InitBiometricContextUseCase
-import com.sample.biometric.domain.usecases.LoginWithTokenUseCase
-import com.sample.biometric.domain.usecases.LoginWithUsernameUseCase
-import com.sample.biometric.domain.usecases.LogoutUseCase
-import com.sample.biometric.domain.usecases.SaveBiometricDataUseCase
+import com.sample.biometric.domain.usecases.auth.ExpireTokenUseCase
+import com.sample.biometric.domain.usecases.biometric.GetBiometricStatusUseCase
+import com.sample.biometric.domain.usecases.biometric.GetBiometricTokenUseCase
+import com.sample.biometric.domain.usecases.auth.GetUserUseCase
+import com.sample.biometric.domain.usecases.biometric.InitBiometricContextUseCase
+import com.sample.biometric.domain.usecases.auth.LoginWithTokenUseCase
+import com.sample.biometric.domain.usecases.auth.LoginWithUsernameUseCase
+import com.sample.biometric.domain.usecases.auth.LogoutUseCase
+import com.sample.biometric.domain.usecases.biometric.SaveBiometricDataUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -36,6 +37,12 @@ object UseCaseModule {
     @Singleton
     fun provideLoginWithTokenUseCase(userRepository: UserRepository): LoginWithTokenUseCase {
         return LoginWithTokenUseCase(userRepository)
+    }
+
+    @Provides
+    @Singleton
+    fun provideExpireTokenUseCase(userRepository: UserRepository): ExpireTokenUseCase {
+        return ExpireTokenUseCase(userRepository)
     }
 
     @Provides

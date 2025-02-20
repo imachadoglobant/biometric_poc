@@ -10,13 +10,13 @@ import com.sample.biometric.data.error.InvalidCryptoLayerException
 import com.sample.biometric.data.model.BiometricStatus
 import com.sample.biometric.data.model.CryptoPurpose.Decryption
 import com.sample.biometric.data.model.CryptoPurpose.Encryption
-import com.sample.biometric.domain.usecases.GetBiometricStatusUseCase
-import com.sample.biometric.domain.usecases.GetBiometricTokenUseCase
-import com.sample.biometric.domain.usecases.GetUserUseCase
-import com.sample.biometric.domain.usecases.InitBiometricContextUseCase
-import com.sample.biometric.domain.usecases.LoginWithTokenUseCase
-import com.sample.biometric.domain.usecases.LoginWithUsernameUseCase
-import com.sample.biometric.domain.usecases.SaveBiometricDataUseCase
+import com.sample.biometric.domain.usecases.biometric.GetBiometricStatusUseCase
+import com.sample.biometric.domain.usecases.biometric.GetBiometricTokenUseCase
+import com.sample.biometric.domain.usecases.auth.GetUserUseCase
+import com.sample.biometric.domain.usecases.biometric.InitBiometricContextUseCase
+import com.sample.biometric.domain.usecases.auth.LoginWithTokenUseCase
+import com.sample.biometric.domain.usecases.auth.LoginWithUsernameUseCase
+import com.sample.biometric.domain.usecases.biometric.SaveBiometricDataUseCase
 import com.sample.biometric.domain.DomainResult
 import com.sample.biometric.ui.ViewState
 import com.sample.biometric.ui.screen.biometric.BiometricContext
@@ -41,22 +41,16 @@ class LoginViewModel @Inject constructor(
     private val getBiometricToken: GetBiometricTokenUseCase
 ) : ViewModel() {
 
-    private val _uiState: MutableStateFlow<ViewState<LoginUIState>> =
+    private val _uiState: MutableStateFlow<ViewState<LoginState>> =
         MutableStateFlow(ViewState.Initial)
-    val uiState: StateFlow<ViewState<LoginUIState>> = _uiState.asStateFlow()
+    val uiState: StateFlow<ViewState<LoginState>> = _uiState.asStateFlow()
 
     fun loadData() = viewModelScope.launch {
         if (_uiState.value !is ViewState.Initial) return@launch
         val token = getUser().successDataOrNull()?.token
         Timber.d("token=$token")
 
-        _uiState.update {
-            ViewState.Success(
-                LoginUIState(
-                    token = token
-                )
-            )
-        }
+        initBiometric(token)
     }
 
     private fun shouldAskTokenEnrollment(
@@ -133,6 +127,14 @@ class LoginViewModel @Inject constructor(
 
             is DomainResult.Success -> {
                 Timber.d("Login Done")
+                _uiState.update {
+                    val state = _uiState.value.successDataOrNull()
+                    ViewState.Success(
+                        state?.copy(
+                            token = token
+                        )
+                    )
+                }
             }
         }
     }
@@ -199,7 +201,7 @@ class LoginViewModel @Inject constructor(
         }
         _uiState.update {
             ViewState.Success(
-                LoginUIState(
+                LoginState(
                     token = token,
                     canLoginWithBiometry = biometricStatus.canLoginWithBiometricToken(),
                     askBiometricEnrollment = askBiometricEnrollment,
@@ -281,7 +283,7 @@ class LoginViewModel @Inject constructor(
             return
         }
 
-        Timber.i("On Auth Succeeded $cryptoObject")
+        Timber.i("On Auth Succeeded")
         val state = _uiState.value.successDataOrNull() ?: return
 
         _uiState.update {

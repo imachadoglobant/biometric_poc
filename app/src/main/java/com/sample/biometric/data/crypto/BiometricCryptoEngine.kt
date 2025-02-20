@@ -9,11 +9,12 @@ import android.security.keystore.KeyProperties.PURPOSE_DECRYPT
 import android.security.keystore.KeyProperties.PURPOSE_ENCRYPT
 import android.util.Base64
 import androidx.biometric.BiometricPrompt.CryptoObject
-import com.sample.biometric.data.model.CryptoPurpose
 import com.sample.biometric.data.crypto.ValidationResult.KEY_INIT_FAIL
 import com.sample.biometric.data.crypto.ValidationResult.KEY_PERMANENTLY_INVALIDATED
 import com.sample.biometric.data.crypto.ValidationResult.OK
 import com.sample.biometric.data.crypto.ValidationResult.VALIDATION_FAILED
+import com.sample.biometric.data.model.CryptoPurpose
+import com.sample.biometric.data.model.CryptoPurpose.Decryption
 import timber.log.Timber
 import java.security.KeyStore
 import javax.crypto.Cipher
@@ -25,7 +26,7 @@ import javax.crypto.spec.IvParameterSpec
 import kotlin.random.Random
 import kotlin.text.Charsets.UTF_8
 
-class CryptoEngine {
+class BiometricCryptoEngine {
 
     companion object {
         private const val ANDROID_KEYSTORE = "AndroidKeyStore"
@@ -61,9 +62,7 @@ class CryptoEngine {
     }
 
     private fun warmup() {
-        val bytes = ByteArray(RANDOM_BYTE_ARRAY_SIZE)
-        Random.nextBytes(bytes)
-        createCryptoObject(CryptoPurpose.Decryption, bytes)
+        createCryptoObject(Decryption, null)
     }
 
     private fun isTargetKeyPresent(): Boolean {
@@ -113,11 +112,18 @@ class CryptoEngine {
         }
     }
 
-    fun createCryptoObject(purpose: CryptoPurpose, iv: ByteArray?): CryptoObject {
+    fun createCryptoObject(purpose: CryptoPurpose, iv: String?): CryptoObject {
+        val decryptedIv = if (iv == null) {
+            Random.nextBytes(ByteArray(RANDOM_BYTE_ARRAY_SIZE))
+        } else if (purpose == Decryption) {
+            Base64.decode(iv, Base64.DEFAULT)
+        } else {
+            null
+        }
         val cipher = getCipher()
         val secretKey = getSecretKey()
-        if (purpose == CryptoPurpose.Decryption) {
-            cipher.init(DECRYPT_MODE, secretKey, IvParameterSpec(iv))
+        if (purpose == Decryption) {
+            cipher.init(DECRYPT_MODE, secretKey, IvParameterSpec(decryptedIv))
         } else {
             cipher.init(ENCRYPT_MODE, secretKey)
         }
@@ -137,9 +143,10 @@ class CryptoEngine {
         )
     }
 
-    fun decrypt(encryptedData: ByteArray, cryptoObject: CryptoObject): String {
+    fun decrypt(data: String, cryptoObject: CryptoObject): String {
+        val decodedData = Base64.decode(data, Base64.DEFAULT)
         val cipher = cryptoObject.cipher
-        val decryptedData = cipher?.doFinal(encryptedData)
+        val decryptedData = cipher?.doFinal(decodedData)
         return decryptedData?.toString(UTF_8).orEmpty()
     }
 

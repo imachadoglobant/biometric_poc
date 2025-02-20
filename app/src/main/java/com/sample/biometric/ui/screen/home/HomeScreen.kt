@@ -50,11 +50,21 @@ fun HomeScreen(
             .padding(top = 120.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = stringResource(id = R.string.home_content_message))
+        Text(text = stringResource(
+            R.string.home_content_message,
+            successState?.username.orEmpty()
+        ))
         Divider(Modifier.width(8.dp))
         Button(
             onClick = {
-                viewModel.logout()
+                viewModel.doExpireSession()
+            }
+        ) {
+            Text(text = stringResource(id = R.string.expire_button_text))
+        }
+        Button(
+            onClick = {
+                viewModel.doLogout()
             }
         ) {
             Text(text = stringResource(id = R.string.logout_button_text))

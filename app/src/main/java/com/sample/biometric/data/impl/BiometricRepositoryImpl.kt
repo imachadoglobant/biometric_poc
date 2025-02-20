@@ -1,6 +1,5 @@
 package com.sample.biometric.data.impl
 
-import android.util.Base64
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
 import androidx.biometric.BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE
@@ -12,7 +11,7 @@ import com.sample.biometric.common.DataResult
 import com.sample.biometric.common.DataResult.Error
 import com.sample.biometric.common.DataResult.Success
 import com.sample.biometric.data.BiometricRepository
-import com.sample.biometric.data.crypto.CryptoEngine
+import com.sample.biometric.data.crypto.BiometricCryptoEngine
 import com.sample.biometric.data.crypto.ValidationResult
 import com.sample.biometric.data.crypto.ValidationResult.KEY_INIT_FAIL
 import com.sample.biometric.data.crypto.ValidationResult.KEY_PERMANENTLY_INVALIDATED
@@ -25,7 +24,6 @@ import com.sample.biometric.data.model.BiometricAuthStatus.NOT_AVAILABLE
 import com.sample.biometric.data.model.BiometricAuthStatus.TEMPORARY_NOT_AVAILABLE
 import com.sample.biometric.data.model.BiometricStatus
 import com.sample.biometric.data.model.CryptoPurpose
-import com.sample.biometric.data.model.CryptoPurpose.Decryption
 import com.sample.biometric.data.model.KeyStatus
 import com.sample.biometric.data.model.KeyStatus.INVALIDATED
 import com.sample.biometric.data.model.KeyStatus.NOT_READY
@@ -37,7 +35,7 @@ import timber.log.Timber
 class BiometricRepositoryImpl(
     private val biometricManager: BiometricManager,
     private val requiredAuthenticators: Int = BIOMETRIC_STRONG,
-    private val cryptoEngine: CryptoEngine,
+    private val cryptoEngine: BiometricCryptoEngine,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : BiometricRepository {
 
@@ -102,10 +100,8 @@ class BiometricRepositoryImpl(
     ): DataResult<String> {
         val error = validateCryptoLayer() as? Error
         if (error != null) return Error(error.exception)
-        // 1. decode token data on byteArray
-        val tokenData = Base64.decode(biometricToken, Base64.DEFAULT)
-        // 2. decrypt token via cryptoEngine (using cipher inside cryptoObject
-        return Success(cryptoEngine.decrypt(tokenData, cryptoObject))
+        // Decrypt token via cryptoEngine (using cipher inside cryptoObject
+        return Success(cryptoEngine.decrypt(biometricToken, cryptoObject))
     }
 
     override suspend fun createCryptoObject(
@@ -115,12 +111,7 @@ class BiometricRepositoryImpl(
         val error = validateCryptoLayer() as? Error
         if (error != null) return@withContext Error(error.exception)
 
-        val decryptedIv = if (purpose == Decryption) {
-            Base64.decode(iv, Base64.DEFAULT)
-        } else {
-            null
-        }
-        return@withContext Success(cryptoEngine.createCryptoObject(purpose, decryptedIv))
+        return@withContext Success(cryptoEngine.createCryptoObject(purpose, iv))
     }
 
     override suspend fun clear() {

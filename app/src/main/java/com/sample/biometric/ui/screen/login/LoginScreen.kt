@@ -49,7 +49,7 @@ fun LoginScreen(
     viewModel: LoginViewModel = hiltViewModel(),
     onUserLoginReady: () -> Unit = {},
 ) {
-    val uiState: ViewState<LoginUIState> by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState: ViewState<LoginState> by viewModel.uiState.collectAsStateWithLifecycle()
     val successState = (uiState as? ViewState.Success)?.data
     val navigateToHome by remember(uiState) {
         derivedStateOf { successState?.isAuthenticated == true && !successState.askBiometricEnrollment }

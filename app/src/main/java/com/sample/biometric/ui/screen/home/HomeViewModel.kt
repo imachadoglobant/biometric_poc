@@ -2,8 +2,9 @@ package com.sample.biometric.ui.screen.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.sample.biometric.domain.usecases.GetUserUseCase
-import com.sample.biometric.domain.usecases.LogoutUseCase
+import com.sample.biometric.domain.usecases.auth.ExpireTokenUseCase
+import com.sample.biometric.domain.usecases.auth.GetUserUseCase
+import com.sample.biometric.domain.usecases.auth.LogoutUseCase
 import com.sample.biometric.ui.ViewState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,8 +17,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val getUserUseCase: GetUserUseCase,
-    private val logoutUseCase: LogoutUseCase
+    private val getUser: GetUserUseCase,
+    private val expireToken: ExpireTokenUseCase,
+    private val logout: LogoutUseCase
 ) : ViewModel() {
 
     private val _uiState: MutableStateFlow<ViewState<HomeUiState>> by lazy {
@@ -30,27 +32,38 @@ class HomeViewModel @Inject constructor(
         _uiState.asStateFlow()
     }
 
-    fun loadData() {
-        viewModelScope.launch {
-            val loggedIn = getUserUseCase().successDataOrNull()?.token?.isNotBlank() == true
-            Timber.d("loggedIn=${loggedIn}")
+    fun loadData() = viewModelScope.launch {
+        val user = getUser().successDataOrNull()
+        Timber.d("user=${user}")
 
-            setLoggedIn(loggedIn)
-        }
-    }
-
-    fun logout() {
-        viewModelScope.launch {
-            logoutUseCase()
-            setLoggedIn(false)
-        }
-    }
-
-    private fun setLoggedIn(loggedIn: Boolean) {
         _uiState.update {
             ViewState.Success(
                 HomeUiState(
-                    loggedIn = loggedIn
+                    username = user?.username.orEmpty(),
+                    loggedIn = user?.token?.isNotBlank() == true
+                )
+            )
+        }
+    }
+
+    fun doExpireSession() = viewModelScope.launch {
+        expireToken()
+        setLoggedOut()
+    }
+
+
+    fun doLogout() = viewModelScope.launch {
+        logout()
+        setLoggedOut()
+    }
+
+    private fun setLoggedOut() {
+        val state = (_uiState.value as? ViewState.Success)?.data
+
+        _uiState.update {
+            ViewState.Success(
+                state?.copy(
+                    loggedIn = false
                 )
             )
         }

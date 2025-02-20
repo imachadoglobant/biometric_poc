@@ -5,7 +5,8 @@
     <string name="username_placeholder">Username</string>
     <string name="password_placeholder">Password</string>
     <string name="login_button_text">Login</string>
-    <string name="home_content_message">This is the home page</string>
+    <string name="home_content_message">Hi %s!</string>
+    <string name="expire_button_text">Expire session</string>
     <string name="logout_button_text">Logout</string>
     <string name="button_biometric_text">Use Biometric</string>
     <string name="button_biometric_content_descr">Biometric Login button</string>

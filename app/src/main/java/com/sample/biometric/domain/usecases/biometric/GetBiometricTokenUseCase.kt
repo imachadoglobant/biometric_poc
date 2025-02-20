@@ -1,4 +1,4 @@
-package com.sample.biometric.domain.usecases
+package com.sample.biometric.domain.usecases.biometric
 
 import androidx.biometric.BiometricPrompt.CryptoObject
 import com.sample.biometric.common.DataResult

@@ -1,4 +1,4 @@
-package com.sample.biometric.domain.usecases
+package com.sample.biometric.domain.usecases.biometric
 
 import com.sample.biometric.common.DataResult
 import com.sample.biometric.data.BiometricRepository

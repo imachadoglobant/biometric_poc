@@ -2,7 +2,8 @@ package com.sample.biometric.di
 
 import android.content.Context
 import androidx.biometric.BiometricManager
-import com.sample.biometric.data.crypto.CryptoEngine
+import com.sample.biometric.data.crypto.BiometricCryptoEngine
+import com.sample.biometric.data.crypto.CryptoManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -12,7 +13,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object BiometricModule {
+object SecurityModule {
 
     @Provides
     fun provideBiometricManager(@ApplicationContext context: Context): BiometricManager {
@@ -21,8 +22,13 @@ object BiometricModule {
 
     @Provides
     @Singleton
-    fun provideCryptoEngine(): CryptoEngine {
-        return CryptoEngine()
+    fun provideCryptoEngine(): BiometricCryptoEngine {
+        return BiometricCryptoEngine()
+    }
+
+    @Provides
+    fun provideCryptoManager(): CryptoManager {
+        return CryptoManager()
     }
 
 }

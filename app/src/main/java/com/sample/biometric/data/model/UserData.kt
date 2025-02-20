@@ -2,5 +2,6 @@ package com.sample.biometric.data.model
 
 data class UserData(
     val username: String,
-    val token: String
+    val token: String,
+    val expiredToken: String
 )

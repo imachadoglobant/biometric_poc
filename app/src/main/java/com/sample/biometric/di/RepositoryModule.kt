@@ -5,7 +5,8 @@ import androidx.biometric.BiometricManager
 import com.sample.biometric.data.BiometricRepository
 import com.sample.biometric.data.PreferenceRepository
 import com.sample.biometric.data.UserRepository
-import com.sample.biometric.data.crypto.CryptoEngine
+import com.sample.biometric.data.crypto.BiometricCryptoEngine
+import com.sample.biometric.data.crypto.CryptoManager
 import com.sample.biometric.data.impl.BiometricRepositoryImpl
 import com.sample.biometric.data.impl.PreferenceRepositoryImpl
 import com.sample.biometric.data.impl.UserRepositoryImpl
@@ -23,9 +24,10 @@ object RepositoryModule {
     @Provides
     @Singleton
     fun providePreferenceRepository(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
+        cryptoManager: CryptoManager
     ): PreferenceRepository {
-        return PreferenceRepositoryImpl(context)
+        return PreferenceRepositoryImpl(context, cryptoManager)
     }
 
     @Provides
@@ -38,7 +40,7 @@ object RepositoryModule {
     @Singleton
     fun provideTokenRepository(
         biometricManager: BiometricManager,
-        cryptoEngine: CryptoEngine
+        cryptoEngine: BiometricCryptoEngine
     ): BiometricRepository {
         return BiometricRepositoryImpl(
             biometricManager = biometricManager,

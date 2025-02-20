@@ -21,6 +21,11 @@ interface UserRepository {
     suspend fun getToken(): String
 
     /**
+     * Retrieve user previous token
+     */
+    suspend fun getExpiredToken(): String
+
+    /**
      * True if biometric info has been previously stored
      */
     suspend fun isTokenPresent(): Boolean
@@ -38,8 +43,15 @@ interface UserRepository {
      * Retrieve user name if authenticated
      */
     suspend fun getUsername(): String
+
+    /**
+     * Remove stored token
+     */
+    suspend fun expireToken()
+
     /**
      * Clear user session out
      */
     suspend fun logout()
+
 }

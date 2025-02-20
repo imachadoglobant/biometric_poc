@@ -2,7 +2,7 @@ package com.sample.biometric.ui.screen.login
 
 import com.sample.biometric.ui.screen.biometric.BiometricContext
 
-data class LoginUIState (
+data class LoginState (
     val usernameField: String = "",
     val passwordField: String = "",
 
