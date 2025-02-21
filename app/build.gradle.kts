@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     kotlin("kapt")
+    id("com.google.protobuf")
 }
 
 android {
@@ -76,6 +77,10 @@ dependencies {
     kapt("com.google.dagger:dagger-android-processor:2.43.2")
     // DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.2")
+    implementation("androidx.datastore:datastore:1.1.2")
+    implementation("com.google.protobuf:protobuf-javalite:4.29.3")
+    implementation("com.google.protobuf:protobuf-kotlin-lite:4.29.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     // Biometric
     implementation("androidx.biometric:biometric:1.1.0")
     //Test & dev support
@@ -85,4 +90,19 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.7.8")
     debugImplementation("androidx.compose.ui:ui-tooling:1.7.8")
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.7.8")
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:4.29.3"
+    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.plugins{
+                create("java") {
+                    option("lite")
+                }
+            }
+        }
+    }
 }

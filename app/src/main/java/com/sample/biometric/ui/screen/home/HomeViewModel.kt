@@ -32,21 +32,27 @@ class HomeViewModel @Inject constructor(
     }
 
     fun loadData() = viewModelScope.launch {
-        val user = getUser().successDataOrNull()
+        val user = getUser().successDataOrNull() ?: run {
+            Timber.e(NullPointerException("user is null"))
+            return@launch
+        }
+
         Timber.d("user=${user}")
 
         _uiState.update {
             ViewState.Success(
-                HomeUiState(
-                    username = user?.username.orEmpty(),
-                    loggedIn = user?.token?.isNotBlank() == true
-                )
+                HomeUiState(user)
             )
         }
     }
 
     fun doExpireSession() = viewModelScope.launch {
-        expireToken()
+        val user = getUser().successDataOrNull() ?: run {
+            Timber.e(NullPointerException("user is null"))
+            return@launch
+        }
+
+        expireToken(user)
         setLoggedOut()
     }
 
@@ -59,7 +65,9 @@ class HomeViewModel @Inject constructor(
     private fun setLoggedOut() {
         _uiState.modify {
             it.copy(
-                loggedIn = false
+                user = it.user.copy(
+                    token = ""
+                )
             )
         }
     }

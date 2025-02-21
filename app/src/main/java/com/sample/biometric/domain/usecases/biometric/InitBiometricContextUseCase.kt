@@ -13,26 +13,27 @@ class InitBiometricContextUseCase(
 ) {
 
     suspend operator fun invoke(purpose: CryptoPurpose): DomainResult<BiometricContext> {
-        return when (val result = biometricRepository.createCryptoObject(
-            purpose,
-            userRepository.getBiometricIv()
-        )) {
-            is DataResult.Success -> {
-                val cryptoObject = result.data ?: run {
-                    return DomainResult.Error(NullPointerException("crypto object is null"))
-                }
+        val biometricIv = userRepository.getUser()?.biometricIv ?: run {
+            return DomainResult.Error(NullPointerException("biometricIv is null"))
+        }
 
-                DomainResult.Success(
-                    BiometricContext(
-                        purpose = purpose,
-                        cryptoObject = cryptoObject
+        return when (val result = biometricRepository.createCryptoObject(purpose, biometricIv)) {
+
+            is DataResult.Success -> {
+                result.data?.let { cryptoObject ->
+                    DomainResult.Success(
+                        BiometricContext(
+                            purpose = purpose,
+                            cryptoObject = cryptoObject
+                        )
                     )
-                )
+                } ?: DomainResult.Error(NullPointerException("crypto object is null"))
             }
 
             is DataResult.Error -> {
                 DomainResult.Error(result.exception)
             }
+
         }
     }
 

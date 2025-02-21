@@ -12,7 +12,15 @@ class LoginWithUsernameUseCase(private val userRepository: UserRepository) {
         Timber.d("do login")
         val token = UUID.randomUUID().toString()
 
-        userRepository.saveUser(username, token)
+        userRepository.saveUser(
+            UserData(
+                username = username,
+                token = token,
+                expiredToken = "",
+                biometricToken = "",
+                biometricIv = ""
+            )
+        )
 
         return DomainResult.Success(
             userRepository.getUser()

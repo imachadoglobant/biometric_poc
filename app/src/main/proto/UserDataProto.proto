@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+option java_package = "com.sample.biometric.proto";
+option java_multiple_files = true;
+
+message UserDataProto {
+  string username = 1;
+  string token = 2;
+  string expired_token = 3;
+  string biometric_token = 4;
+  string biometric_iv = 5;
+}

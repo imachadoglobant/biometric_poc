@@ -16,13 +16,15 @@ class LoginWithTokenUseCase(private val userRepository: UserRepository) {
         delay(DELAY)
         var user = userRepository.getUser()
 
-        if (user.expiredToken != token) {
+        if (user?.expiredToken != token) {
             userRepository.logout()
             return DomainResult.Error(InvalidTokenException())
         }
 
         // Token should be refreshed here
-        user = userRepository.saveUser(user.username, token)
+        user = userRepository.saveUser(
+            user.copy(token = token)
+        )
 
         return DomainResult.Success(user)
     }

@@ -1,6 +1,9 @@
 package com.sample.biometric.ui.screen.home
 
+import com.sample.biometric.data.model.UserData
+
 data class HomeUiState(
-    val loggedIn: Boolean = true,
-    val username: String
-)
+    val user: UserData
+) {
+    val loggedIn = user.token.isNotBlank()
+}

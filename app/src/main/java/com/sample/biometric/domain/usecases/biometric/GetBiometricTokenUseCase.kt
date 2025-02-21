@@ -12,10 +12,11 @@ class GetBiometricTokenUseCase(
 ) {
 
     suspend operator fun invoke(cryptoObject: CryptoObject): DomainResult<String> {
-        return when (val result = biometricRepository.decryptToken(
-            cryptoObject,
-            userRepository.getBiometricToken())
-        ) {
+        val biometricToken = userRepository.getUser()?.biometricToken ?: run {
+            return DomainResult.Error(NullPointerException("user is null"))
+        }
+
+        return when (val result = biometricRepository.decryptToken(cryptoObject, biometricToken)) {
             is DataResult.Error -> DomainResult.Error(result.exception)
             is DataResult.Success -> DomainResult.Success(result.data)
         }

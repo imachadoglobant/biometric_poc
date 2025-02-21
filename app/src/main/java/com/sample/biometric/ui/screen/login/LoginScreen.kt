@@ -67,6 +67,7 @@ fun LoginScreen(
     }
 
     val promptContainerState = rememberPromptContainerState()
+
     BiometricPromptContainer(
         state = promptContainerState,
         onAuthSucceeded = { cryptoObject ->

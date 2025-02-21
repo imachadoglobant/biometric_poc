@@ -26,8 +26,7 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideUserRepository(preferenceRepository: PreferenceRepository) : UserRepository =
-        UserRepositoryImpl(preferenceRepository)
+    fun provideUserRepository(context: Context) : UserRepository = UserRepositoryImpl(context)
 
     @Provides
     @Singleton
