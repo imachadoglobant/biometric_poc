@@ -12,5 +12,6 @@ sealed interface ViewState<out T> {
         }
         return null
     }
+
 }
 

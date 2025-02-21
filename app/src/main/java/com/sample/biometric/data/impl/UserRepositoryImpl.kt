@@ -3,6 +3,7 @@ package com.sample.biometric.data.impl
 import com.sample.biometric.data.PreferenceRepository
 import com.sample.biometric.data.UserRepository
 import com.sample.biometric.data.model.UserData
+import timber.log.Timber
 
 class UserRepositoryImpl(private val preferenceRepository: PreferenceRepository) : UserRepository {
 
@@ -18,6 +19,7 @@ class UserRepositoryImpl(private val preferenceRepository: PreferenceRepository)
         preferenceRepository.storeEncodedValue(USERNAME_KEY, username)
         preferenceRepository.storeValue(TOKEN_KEY, token)
         preferenceRepository.storeValue(EXPIRED_TOKEN_KEY, "")
+        Timber.d("Encoded user data saved")
 
         return UserData(
             username = username,
@@ -27,6 +29,7 @@ class UserRepositoryImpl(private val preferenceRepository: PreferenceRepository)
     }
 
     override suspend fun getUser(): UserData {
+        Timber.d("Decoded user data retrieved")
         return UserData(
             username = preferenceRepository.getDecodedValue(USERNAME_KEY),
             token = preferenceRepository.getValue(TOKEN_KEY),
@@ -35,6 +38,7 @@ class UserRepositoryImpl(private val preferenceRepository: PreferenceRepository)
     }
 
     override suspend fun saveBiometricData(biometricToken: String, iv: String) {
+        Timber.d("Biometric user data saved")
         preferenceRepository.storeValue(BIOMETRIC_TOKEN_KEY, biometricToken)
         preferenceRepository.storeValue(BIOMETRIC_IV_KEY, iv)
     }
@@ -44,6 +48,7 @@ class UserRepositoryImpl(private val preferenceRepository: PreferenceRepository)
             && preferenceRepository.contains(BIOMETRIC_IV_KEY)
 
     override suspend fun getBiometricToken(): String {
+        Timber.d("Biometric user data retrieved")
         return preferenceRepository.getValue(BIOMETRIC_TOKEN_KEY)
     }
 
@@ -52,6 +57,7 @@ class UserRepositoryImpl(private val preferenceRepository: PreferenceRepository)
     }
 
     override suspend fun expireToken() {
+        Timber.d("User token expired")
         val oldToken = preferenceRepository.getValue(TOKEN_KEY)
         preferenceRepository.storeValue(EXPIRED_TOKEN_KEY, oldToken)
         preferenceRepository.storeValue(TOKEN_KEY, "")

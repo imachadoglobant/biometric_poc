@@ -2,13 +2,15 @@ package com.sample.biometric.data.impl
 
 import android.content.Context
 import androidx.datastore.core.DataStore
+import androidx.datastore.core.IOException
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.sample.biometric.data.PreferenceRepository
 import com.sample.biometric.data.crypto.CryptoManager
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.firstOrNull
+import timber.log.Timber
 
 class PreferenceRepositoryImpl(
     context: Context,
@@ -22,10 +24,19 @@ class PreferenceRepositoryImpl(
 
     private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(STORAGE_KEY)
     private val dataStore = context.dataStore
+    
+    private suspend fun getData(): Preferences? {
+        return try {
+            dataStore.data.firstOrNull()
+        } catch (e: IOException) {
+            Timber.e("getData error", e)
+            null
+        }
+    }
 
     override suspend fun getValue(key: String): String {
         val preferencesKey = stringPreferencesKey(key)
-        return dataStore.data.first()[preferencesKey].orEmpty()
+        return getData()?.get(preferencesKey).orEmpty()
     }
 
     override suspend fun storeValue(key: String, value: String) {
@@ -37,9 +48,9 @@ class PreferenceRepositoryImpl(
 
     override suspend fun getDecodedValue(key: String): String {
         val preferencesKey = stringPreferencesKey(key)
-        val value = dataStore.data.first()[preferencesKey].orEmpty()
+        val value = getData()?.get(preferencesKey).orEmpty()
         val ivKey = stringPreferencesKey(IV_KEY)
-        val iv = dataStore.data.first()[ivKey].orEmpty()
+        val iv = getData()?.get(ivKey).orEmpty()
         return cryptoManager.decrypt(value, iv)
     }
 
@@ -61,7 +72,7 @@ class PreferenceRepositoryImpl(
 
     override suspend fun contains(key: String): Boolean {
         val preferencesKey = stringPreferencesKey(key)
-        return dataStore.data.first()[preferencesKey]?.isNotBlank() == true
+        return getData()?.get(preferencesKey)?.isNotBlank() == true
     }
 
 }

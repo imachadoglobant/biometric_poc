@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 
 @Composable
 inline fun <reified VM : ViewModel> retrieveViewModel(): VM {
@@ -15,4 +17,14 @@ inline fun <reified VM : ViewModel> retrieveViewModel(): VM {
         },
         factory = LocalViewModelFactory.current
     )
+}
+
+fun <T> MutableStateFlow<ViewState<T>>.modify(callback: (value: T) -> T) {
+    val state = (value as? ViewState.Success)?.data ?: return
+
+    update {
+        ViewState.Success(
+            callback(state)
+        )
+    }
 }

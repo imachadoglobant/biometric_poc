@@ -6,6 +6,7 @@ import com.sample.biometric.domain.usecases.auth.ExpireTokenUseCase
 import com.sample.biometric.domain.usecases.auth.GetUserUseCase
 import com.sample.biometric.domain.usecases.auth.LogoutUseCase
 import com.sample.biometric.ui.ViewState
+import com.sample.biometric.ui.modify
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,13 +57,9 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun setLoggedOut() {
-        val state = (_uiState.value as? ViewState.Success)?.data
-
-        _uiState.update {
-            ViewState.Success(
-                state?.copy(
-                    loggedIn = false
-                )
+        _uiState.modify {
+            it.copy(
+                loggedIn = false
             )
         }
     }
