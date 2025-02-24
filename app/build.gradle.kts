@@ -74,8 +74,11 @@ dependencies {
     annotationProcessor("com.google.dagger:dagger-compiler:2.43.2")
     kapt("com.google.dagger:dagger-compiler:2.43.2")
     kapt("com.google.dagger:dagger-android-processor:2.43.2")
-    // DataStore
-    implementation("androidx.datastore:datastore-preferences:1.1.2")
+    // Room
+    implementation("androidx.room:room-runtime:2.6.1")
+    annotationProcessor("androidx.room:room-compiler:2.6.1")
+    kapt("androidx.room:room-compiler:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
     // Biometric
     implementation("androidx.biometric:biometric:1.1.0")
     //Test & dev support

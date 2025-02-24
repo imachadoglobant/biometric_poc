@@ -13,6 +13,7 @@ import javax.inject.Singleton
     modules = [
         AndroidInjectionModule::class,
         BiometricAppModule::class,
+        DatabaseModule::class,
         RepositoryModule::class,
         SecurityModule::class,
         UseCaseModule::class,
@@ -31,4 +32,5 @@ interface BiometricAppComponent : AndroidInjector<BiometricApp> {
         @BindsInstance
         fun applicationBind(application: BiometricApp): Builder
     }
+
 }

@@ -2,6 +2,7 @@ package com.sample.biometric.ui.screen.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.sample.biometric.data.model.UserData
 import com.sample.biometric.domain.usecases.auth.ExpireTokenUseCase
 import com.sample.biometric.domain.usecases.auth.GetUserUseCase
 import com.sample.biometric.domain.usecases.auth.LogoutUseCase
@@ -32,34 +33,39 @@ class HomeViewModel @Inject constructor(
     }
 
     fun loadData() = viewModelScope.launch {
-        val user = getUser().successDataOrNull()
+        val user = getUser().successDataOrNull() ?: run {
+            Timber.e(NullPointerException("user is null"))
+            return@launch
+        }
+
         Timber.d("user=${user}")
 
         _uiState.update {
             ViewState.Success(
-                HomeUiState(
-                    username = user?.username.orEmpty(),
-                    loggedIn = user?.token?.isNotBlank() == true
-                )
+                HomeUiState(user)
             )
         }
     }
 
     fun doExpireSession() = viewModelScope.launch {
-        expireToken()
-        setLoggedOut()
+        val user = getUser().successDataOrNull() ?: run {
+            Timber.e(NullPointerException("user is null"))
+            return@launch
+        }
+
+        setUser(expireToken(user))
     }
 
 
     fun doLogout() = viewModelScope.launch {
         logout()
-        setLoggedOut()
+        setUser(null)
     }
 
-    private fun setLoggedOut() {
+    private fun setUser(user: UserData?) {
         _uiState.modify {
             it.copy(
-                loggedIn = false
+                user = user
             )
         }
     }

@@ -52,7 +52,7 @@ fun HomeScreen(
     ) {
         Text(text = stringResource(
             R.string.home_content_message,
-            successState?.username.orEmpty()
+            successState?.user?.username.orEmpty()
         ))
         Divider(Modifier.width(8.dp))
         Button(

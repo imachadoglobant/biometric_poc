@@ -3,7 +3,7 @@ package com.sample.biometric.di
 import android.content.Context
 import androidx.biometric.BiometricManager
 import com.sample.biometric.data.crypto.BiometricCryptoEngine
-import com.sample.biometric.data.crypto.CryptoManager
+import com.sample.biometric.data.crypto.CryptoEngine
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton
@@ -16,10 +16,10 @@ object SecurityModule {
 
     @Provides
     @Singleton
-    fun provideCryptoEngine() = BiometricCryptoEngine()
+    fun provideBiometricCryptoEngine() = BiometricCryptoEngine()
 
     @Provides
     @Singleton
-    fun provideCryptoManager() = CryptoManager()
+    fun provideCryptoEngine() = CryptoEngine()
 
 }

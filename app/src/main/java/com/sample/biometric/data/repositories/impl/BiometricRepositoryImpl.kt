@@ -1,7 +1,7 @@
-package com.sample.biometric.data.impl
+package com.sample.biometric.data.repositories.impl
 
 import androidx.biometric.BiometricManager
-import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG
+import androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_WEAK
 import androidx.biometric.BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE
 import androidx.biometric.BiometricManager.BIOMETRIC_ERROR_NONE_ENROLLED
 import androidx.biometric.BiometricManager.BIOMETRIC_ERROR_NO_HARDWARE
@@ -10,7 +10,6 @@ import androidx.biometric.BiometricPrompt.CryptoObject
 import com.sample.biometric.common.DataResult
 import com.sample.biometric.common.DataResult.Error
 import com.sample.biometric.common.DataResult.Success
-import com.sample.biometric.data.BiometricRepository
 import com.sample.biometric.data.crypto.BiometricCryptoEngine
 import com.sample.biometric.data.crypto.ValidationResult
 import com.sample.biometric.data.crypto.ValidationResult.KEY_INIT_FAIL
@@ -27,6 +26,7 @@ import com.sample.biometric.data.model.CryptoPurpose
 import com.sample.biometric.data.model.KeyStatus
 import com.sample.biometric.data.model.KeyStatus.INVALIDATED
 import com.sample.biometric.data.model.KeyStatus.NOT_READY
+import com.sample.biometric.data.repositories.BiometricRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -34,10 +34,13 @@ import timber.log.Timber
 
 class BiometricRepositoryImpl(
     private val biometricManager: BiometricManager,
-    private val requiredAuthenticators: Int = BIOMETRIC_STRONG,
     private val cryptoEngine: BiometricCryptoEngine,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : BiometricRepository {
+
+    companion object {
+        private const val REQUIRED_AUTHENTICATORS: Int = BIOMETRIC_WEAK
+    }
 
     override suspend fun getBiometricStatus(isTokenPresent: Boolean): BiometricStatus =
         withContext(dispatcher) {
@@ -66,6 +69,7 @@ class BiometricRepositoryImpl(
 
         // Encrypt the data using the cipher inside the cryptoObject
         val encryptedData = cryptoEngine.encrypt(token, cryptoObject)
+        Timber.d("getEncryptedToken")
         return@withContext Success(encryptedData)
     }
 
@@ -74,11 +78,12 @@ class BiometricRepositoryImpl(
         when (validationResult) {
             KEY_PERMANENTLY_INVALIDATED,
             KEY_INIT_FAIL -> {
-                Timber.e("checkInternalWithCrypto: validationResult=$validationResult")
+                Timber.e("checkInternalWithCrypto: error=$validationResult")
                 clear()
             }
 
             else -> {
+                Timber.d("checkInternalWithCrypto: success")
                 // Do nothing
             }
         }
@@ -86,7 +91,7 @@ class BiometricRepositoryImpl(
     }
 
     private fun readBiometricAuthStatus() =
-        when (biometricManager.canAuthenticate(requiredAuthenticators)) {
+        when (biometricManager.canAuthenticate(REQUIRED_AUTHENTICATORS)) {
             BIOMETRIC_SUCCESS -> BiometricAuthStatus.READY
             BIOMETRIC_ERROR_NO_HARDWARE -> NOT_AVAILABLE
             BIOMETRIC_ERROR_HW_UNAVAILABLE -> TEMPORARY_NOT_AVAILABLE
@@ -100,7 +105,9 @@ class BiometricRepositoryImpl(
     ): DataResult<String> {
         val error = validateCryptoLayer() as? Error
         if (error != null) return Error(error.exception)
+
         // Decrypt token via cryptoEngine (using cipher inside cryptoObject
+        Timber.d("decryptToken")
         return Success(cryptoEngine.decrypt(biometricToken, cryptoObject))
     }
 
@@ -111,11 +118,13 @@ class BiometricRepositoryImpl(
         val error = validateCryptoLayer() as? Error
         if (error != null) return@withContext Error(error.exception)
 
+        Timber.d("createCryptoObject")
         return@withContext Success(cryptoEngine.createCryptoObject(purpose, iv))
     }
 
     override suspend fun clear() {
-        cryptoEngine.clear()
+        Timber.d("clear")
+        cryptoEngine.removeKey()
     }
 
     /**

@@ -1,8 +1,8 @@
-package com.sample.biometric.data
+package com.sample.biometric.data.repositories
 
 import androidx.biometric.BiometricPrompt.CryptoObject
 import com.sample.biometric.common.DataResult
-import com.sample.biometric.data.crypto.EncryptDataResult
+import com.sample.biometric.data.crypto.EncryptedDataResult
 import com.sample.biometric.data.model.BiometricStatus
 import com.sample.biometric.data.model.CryptoPurpose
 
@@ -30,7 +30,7 @@ interface BiometricRepository {
     suspend fun getEncryptedToken(
         cryptoObject: CryptoObject,
         token: String
-    ): DataResult<EncryptDataResult>
+    ): DataResult<EncryptedDataResult>
 
     /**
      * Decrypt the token using the [cryptoObject] passed as parameter

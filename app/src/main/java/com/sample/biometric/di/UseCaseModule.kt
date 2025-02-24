@@ -1,7 +1,7 @@
 package com.sample.biometric.di
 
-import com.sample.biometric.data.BiometricRepository
-import com.sample.biometric.data.UserRepository
+import com.sample.biometric.data.repositories.BiometricRepository
+import com.sample.biometric.data.repositories.UserRepository
 import com.sample.biometric.domain.usecases.auth.ExpireTokenUseCase
 import com.sample.biometric.domain.usecases.auth.GetUserUseCase
 import com.sample.biometric.domain.usecases.auth.LoginWithTokenUseCase
@@ -40,8 +40,10 @@ object UseCaseModule {
 
     @Provides
     @Singleton
-    fun provideLogoutUseCase(userRepository: UserRepository) =
-        LogoutUseCase(userRepository)
+    fun provideLogoutUseCase(
+        biometricRepository: BiometricRepository,
+        userRepository: UserRepository
+    ) = LogoutUseCase(biometricRepository, userRepository)
 
     @Provides
     @Singleton

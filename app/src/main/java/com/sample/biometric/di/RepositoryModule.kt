@@ -1,15 +1,13 @@
 package com.sample.biometric.di
 
-import android.content.Context
 import androidx.biometric.BiometricManager
-import com.sample.biometric.data.BiometricRepository
-import com.sample.biometric.data.PreferenceRepository
-import com.sample.biometric.data.UserRepository
+import com.sample.biometric.data.repositories.BiometricRepository
+import com.sample.biometric.data.daos.UserDataDao
+import com.sample.biometric.data.repositories.UserRepository
 import com.sample.biometric.data.crypto.BiometricCryptoEngine
-import com.sample.biometric.data.crypto.CryptoManager
-import com.sample.biometric.data.impl.BiometricRepositoryImpl
-import com.sample.biometric.data.impl.PreferenceRepositoryImpl
-import com.sample.biometric.data.impl.UserRepositoryImpl
+import com.sample.biometric.data.crypto.CryptoEngine
+import com.sample.biometric.data.repositories.impl.BiometricRepositoryImpl
+import com.sample.biometric.data.repositories.impl.UserRepositoryImpl
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton
@@ -19,15 +17,10 @@ object RepositoryModule {
 
     @Provides
     @Singleton
-    fun providePreferenceRepository(
-        context: Context,
-        cryptoManager: CryptoManager
-    ) : PreferenceRepository = PreferenceRepositoryImpl(context, cryptoManager)
-
-    @Provides
-    @Singleton
-    fun provideUserRepository(preferenceRepository: PreferenceRepository) : UserRepository =
-        UserRepositoryImpl(preferenceRepository)
+    fun provideUserRepository(
+        userDataDao: UserDataDao,
+        cryptoEngine: CryptoEngine
+    ) : UserRepository = UserRepositoryImpl(userDataDao, cryptoEngine)
 
     @Provides
     @Singleton

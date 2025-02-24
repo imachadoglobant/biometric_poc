@@ -1,6 +1,6 @@
 package com.sample.biometric.domain.usecases.auth
 
-import com.sample.biometric.data.UserRepository
+import com.sample.biometric.data.repositories.UserRepository
 import com.sample.biometric.data.error.InvalidTokenException
 import com.sample.biometric.data.model.UserData
 import com.sample.biometric.domain.DomainResult
@@ -14,15 +14,17 @@ class LoginWithTokenUseCase(private val userRepository: UserRepository) {
 
     suspend operator fun invoke(token: String): DomainResult<UserData> {
         delay(DELAY)
-        var user = userRepository.getUser()
+        var user = userRepository.retrieve()
 
-        if (user.expiredToken != token) {
+        if (user?.expiredToken != token) {
             userRepository.logout()
             return DomainResult.Error(InvalidTokenException())
         }
 
         // Token should be refreshed here
-        user = userRepository.saveUser(user.username, token)
+        user = userRepository.save(
+            user.copy(token = token)
+        )
 
         return DomainResult.Success(user)
     }
