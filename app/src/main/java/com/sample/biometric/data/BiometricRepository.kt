@@ -25,7 +25,6 @@ interface BiometricRepository {
      * Store the token using the [cryptoObject] passed as parameter.
      *
      * @param cryptoObject the cryptoObject to use for encryption operations
-     * @throws com.sample.biometric.data.error.InvalidCryptoLayerException if
      * crypto layer is invalid
      */
     suspend fun getEncryptedToken(
@@ -39,8 +38,6 @@ interface BiometricRepository {
      * @param cryptoObject the cryptoObject to use for decryption operations
      * @param biometricToken the encrypted token to decrypt
      * @return the token as string
-     * @throws com.sample.biometric.data.error.InvalidCryptoLayerException if
-     * crypto layer is invalid
      */
     suspend fun decryptToken(
         cryptoObject: CryptoObject,
@@ -52,8 +49,6 @@ interface BiometricRepository {
      *
      * @param purpose the final purpose of the required cryptoObject
      * @param iv encrypted iv as string
-     * @throws com.sample.biometric.data.error.InvalidCryptoLayerException if
-     * crypto layer is invalid
      */
     suspend fun createCryptoObject(
         purpose: CryptoPurpose,

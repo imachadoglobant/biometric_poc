@@ -18,11 +18,11 @@ class PreferenceRepositoryImpl(
 ): PreferenceRepository {
 
     companion object {
-        private const val STORAGE_KEY = "STORAGE_KEY"
-        private const val IV_KEY = "IV_KEY"
+        private const val PREFERENCE_NAME = "PREFERENCE_NAME"
+        private const val SEPARATOR = "|"
     }
 
-    private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(STORAGE_KEY)
+    private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(PREFERENCE_NAME)
     private val dataStore = context.dataStore
     
     private suspend fun getData(): Preferences? {
@@ -49,19 +49,13 @@ class PreferenceRepositoryImpl(
     override suspend fun getDecodedValue(key: String): String {
         val preferencesKey = stringPreferencesKey(key)
         val value = getData()?.get(preferencesKey).orEmpty()
-        val ivKey = stringPreferencesKey(IV_KEY)
-        val iv = getData()?.get(ivKey).orEmpty()
-        return cryptoManager.decrypt(value, iv)
+        val (data, iv) = value.split(SEPARATOR, limit = 2)
+        return cryptoManager.decrypt(data, iv)
     }
 
     override suspend fun storeEncodedValue(key: String, value: String) {
-        dataStore.edit { preference ->
-            val preferencesKey = stringPreferencesKey(key)
-            val ivKey = stringPreferencesKey(IV_KEY)
-            val encryptedValue = cryptoManager.encrypt(value)
-            preference[preferencesKey] = encryptedValue.data
-            preference[ivKey] = encryptedValue.iv
-        }
+        val encryptedValue = cryptoManager.encrypt(value) ?: return
+        storeValue(key, "${encryptedValue.data}$SEPARATOR${encryptedValue.iv}")
     }
 
     override suspend fun clear() {

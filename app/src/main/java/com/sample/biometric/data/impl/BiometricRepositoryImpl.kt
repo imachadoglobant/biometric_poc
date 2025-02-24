@@ -119,8 +119,7 @@ class BiometricRepositoryImpl(
     }
 
     /**
-     * Validate the crypto layer. In case of invalid status, this method
-     * throws an [InvalidCryptoLayerException]
+     * Validate the crypto layer. In case of invalid status
      */
     private suspend fun validateCryptoLayer(): DataResult<Unit> {
         val status = checkInternalWithCrypto()

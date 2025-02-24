@@ -12,14 +12,14 @@ import javax.inject.Singleton
 object SecurityModule {
 
     @Provides
-    fun provideBiometricManager(context: Context) =
-        BiometricManager.from(context)
+    fun provideBiometricManager(context: Context) = BiometricManager.from(context)
 
     @Provides
     @Singleton
     fun provideCryptoEngine() = BiometricCryptoEngine()
 
     @Provides
+    @Singleton
     fun provideCryptoManager() = CryptoManager()
 
 }

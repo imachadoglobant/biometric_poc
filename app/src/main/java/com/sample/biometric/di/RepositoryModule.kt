@@ -22,8 +22,7 @@ object RepositoryModule {
     fun providePreferenceRepository(
         context: Context,
         cryptoManager: CryptoManager
-    ) : PreferenceRepository =
-        PreferenceRepositoryImpl(context, cryptoManager)
+    ) : PreferenceRepository = PreferenceRepositoryImpl(context, cryptoManager)
 
     @Provides
     @Singleton
