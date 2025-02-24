@@ -7,7 +7,9 @@ import com.sample.biometric.domain.DomainResult
 class GetUserUseCase(private val userRepository: UserRepository) {
 
     suspend operator fun invoke(): DomainResult<UserData> {
-        val data = userRepository.getUser()
+        val data = userRepository.getUser() ?: run {
+            return DomainResult.Error(NullPointerException("user is null"))
+        }
         return DomainResult.Success(data)
     }
 

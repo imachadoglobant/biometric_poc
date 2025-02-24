@@ -10,12 +10,12 @@ interface UserRepository {
     /**
      * Store user info
      */
-    suspend fun saveUser(username: String, token: String): UserData
+    suspend fun saveUser(userData: UserData): UserData
 
     /**
      * Retrieves user info
      */
-    suspend fun getUser(): UserData
+    suspend fun getUser(): UserData?
 
     /**
      * Store user biometric info
@@ -40,7 +40,7 @@ interface UserRepository {
     /**
      * Remove stored token
      */
-    suspend fun expireToken()
+    suspend fun expireToken(user: UserData?): UserData?
 
     /**
      * Clear user session out

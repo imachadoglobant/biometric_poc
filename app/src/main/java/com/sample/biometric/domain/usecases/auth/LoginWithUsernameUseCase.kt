@@ -10,9 +10,18 @@ class LoginWithUsernameUseCase(private val userRepository: UserRepository) {
 
     suspend operator fun invoke(username: String, password: String): DomainResult<UserData> {
         Timber.d("do login")
+
+        userRepository.logout()
+
         val token = UUID.randomUUID().toString()
 
-        userRepository.saveUser(username, token)
+        userRepository.saveUser(
+            UserData(
+                username = username,
+                token = token,
+                expiredToken = ""
+            )
+        )
 
         return DomainResult.Success(
             userRepository.getUser()

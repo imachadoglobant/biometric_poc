@@ -1,70 +1,73 @@
 package com.sample.biometric.data.impl
 
-import com.sample.biometric.data.PreferenceRepository
+import com.sample.biometric.data.UserDataDao
 import com.sample.biometric.data.UserRepository
+import com.sample.biometric.data.entities.UserDataEntity
 import com.sample.biometric.data.model.UserData
+import kotlinx.coroutines.flow.firstOrNull
 import timber.log.Timber
 
-class UserRepositoryImpl(private val preferenceRepository: PreferenceRepository) : UserRepository {
+class UserRepositoryImpl(private val dao: UserDataDao) : UserRepository {
 
-    companion object {
-        private const val TOKEN_KEY = "TOKEN_KEY"
-        private const val EXPIRED_TOKEN_KEY = "EXPIRED_TOKEN_KEY"
-        private const val USERNAME_KEY = "USERNAME_KEY"
-        private const val BIOMETRIC_TOKEN_KEY = "BIOMETRIC_TOKEN"
-        private const val BIOMETRIC_IV_KEY = "BIOMETRIC_TOKEN_IV"
-    }
-
-    override suspend fun saveUser(username: String, token: String): UserData {
-        preferenceRepository.storeEncodedValue(USERNAME_KEY, username)
-        preferenceRepository.storeValue(TOKEN_KEY, token)
-        preferenceRepository.storeValue(EXPIRED_TOKEN_KEY, "")
-        Timber.d("Encoded user data saved")
-
-        return UserData(
-            username = username,
-            token = token,
-            expiredToken = ""
+    override suspend fun saveUser(userData: UserData): UserData {
+        dao.insert(
+            UserDataEntity(
+                id = userData.id,
+                username = userData.username,
+                token = userData.token,
+                expiredToken = userData.expiredToken
+            )
         )
+        Timber.d("Encoded user data saved")
+        return userData
     }
 
-    override suspend fun getUser(): UserData {
+    override suspend fun getUser(): UserData? {
         Timber.d("Decoded user data retrieved")
+        val entity = dao.getFirst().firstOrNull() ?: return null
         return UserData(
-            username = preferenceRepository.getDecodedValue(USERNAME_KEY),
-            token = preferenceRepository.getValue(TOKEN_KEY),
-            expiredToken = preferenceRepository.getValue(EXPIRED_TOKEN_KEY)
+            id = entity.id,
+            username = entity.username,
+            token = entity.token,
+            expiredToken = entity.expiredToken
         )
     }
 
     override suspend fun saveBiometricData(biometricToken: String, iv: String) {
         Timber.d("Biometric user data saved")
-        preferenceRepository.storeValue(BIOMETRIC_TOKEN_KEY, biometricToken)
-        preferenceRepository.storeValue(BIOMETRIC_IV_KEY, iv)
+        // preferenceRepository.storeValue(BIOMETRIC_TOKEN_KEY, biometricToken)
+        // preferenceRepository.storeValue(BIOMETRIC_IV_KEY, iv)
     }
 
     override suspend fun isBiometricTokenPresent(): Boolean =
-        preferenceRepository.contains(BIOMETRIC_TOKEN_KEY)
-            && preferenceRepository.contains(BIOMETRIC_IV_KEY)
+        false
+        // preferenceRepository.contains(BIOMETRIC_TOKEN_KEY)
+        //    && preferenceRepository.contains(BIOMETRIC_IV_KEY)
 
     override suspend fun getBiometricToken(): String {
         Timber.d("Biometric user data retrieved")
-        return preferenceRepository.getValue(BIOMETRIC_TOKEN_KEY)
+        // return preferenceRepository.getValue(BIOMETRIC_TOKEN_KEY)
+        return ""
     }
 
     override suspend fun getBiometricIv(): String {
-        return preferenceRepository.getValue(BIOMETRIC_IV_KEY)
+        // return preferenceRepository.getValue(BIOMETRIC_IV_KEY)
+        return ""
     }
 
-    override suspend fun expireToken() {
+    override suspend fun expireToken(user: UserData?): UserData? {
         Timber.d("User token expired")
-        val oldToken = preferenceRepository.getValue(TOKEN_KEY)
-        preferenceRepository.storeValue(EXPIRED_TOKEN_KEY, oldToken)
-        preferenceRepository.storeValue(TOKEN_KEY, "")
+        val oldToken = user?.token ?: return null
+        return saveUser(
+            user.copy(
+                token = "",
+                expiredToken = oldToken
+            )
+        )
     }
 
     override suspend fun logout() {
-        preferenceRepository.clear()
+        dao.deleteAll()
     }
 
 }
