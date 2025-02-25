@@ -1,7 +1,7 @@
 package com.sample.biometric.domain.usecases.auth
 
 import com.sample.biometric.data.repositories.UserRepository
-import com.sample.biometric.data.model.UserData
+import com.sample.biometric.data.models.UserData
 import com.sample.biometric.domain.DomainResult
 import timber.log.Timber
 import java.util.UUID

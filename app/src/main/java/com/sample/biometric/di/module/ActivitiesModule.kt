@@ -1,4 +1,4 @@
-package com.sample.biometric.di
+package com.sample.biometric.di.module
 
 import com.sample.biometric.MainActivity
 import dagger.Module

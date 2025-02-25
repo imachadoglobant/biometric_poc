@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.sample.biometric.data.daos.UserDataDao
-import com.sample.biometric.data.entities.UserDataEntity
+import com.sample.biometric.data.dao.UserDataDao
+import com.sample.biometric.data.entity.UserDataEntity
 import timber.log.Timber
 import java.util.concurrent.Executors
 

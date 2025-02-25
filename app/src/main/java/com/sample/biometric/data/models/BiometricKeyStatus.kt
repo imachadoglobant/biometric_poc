@@ -1,6 +1,6 @@
-package com.sample.biometric.data.model
+package com.sample.biometric.data.models
 
-enum class KeyStatus {
+enum class BiometricKeyStatus {
     /**
      * Key is not ready to use
      */

@@ -1,8 +1,8 @@
-package com.sample.biometric.di
+package com.sample.biometric.di.module
 
 import androidx.biometric.BiometricManager
 import com.sample.biometric.data.repositories.BiometricRepository
-import com.sample.biometric.data.daos.UserDataDao
+import com.sample.biometric.data.dao.UserDataDao
 import com.sample.biometric.data.repositories.UserRepository
 import com.sample.biometric.data.crypto.BiometricCryptoEngine
 import com.sample.biometric.data.crypto.CryptoEngine

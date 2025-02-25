@@ -3,12 +3,14 @@ package com.sample.biometric.data.crypto
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import android.util.Base64
 import androidx.biometric.BiometricPrompt.CryptoObject
-import com.sample.biometric.data.crypto.ValidationResult.KEY_INIT_FAIL
-import com.sample.biometric.data.crypto.ValidationResult.KEY_PERMANENTLY_INVALIDATED
-import com.sample.biometric.data.crypto.ValidationResult.OK
-import com.sample.biometric.data.crypto.ValidationResult.VALIDATION_FAILED
-import com.sample.biometric.data.model.CryptoPurpose
-import com.sample.biometric.data.model.CryptoPurpose.Decryption
+import com.sample.biometric.data.models.BiometricValidationResult.KEY_INIT_FAIL
+import com.sample.biometric.data.models.BiometricValidationResult.KEY_PERMANENTLY_INVALIDATED
+import com.sample.biometric.data.models.BiometricValidationResult.OK
+import com.sample.biometric.data.models.BiometricValidationResult.VALIDATION_FAILED
+import com.sample.biometric.data.models.CryptoPurpose
+import com.sample.biometric.data.models.CryptoPurpose.Decryption
+import com.sample.biometric.data.models.EncryptedDataResult
+import com.sample.biometric.data.models.BiometricValidationResult
 import timber.log.Timber
 import javax.crypto.SecretKey
 import kotlin.random.Random
@@ -27,7 +29,7 @@ class BiometricCryptoEngine : CryptoEngine(BIOMETRIC_KEY_ALIAS) {
         .setInvalidatedByBiometricEnrollment(true)
     }
 
-    private fun doWarmupWithResult(): ValidationResult {
+    private fun doWarmupWithResult(): BiometricValidationResult {
         Timber.d("doWarmupWithResult")
         return try {
             warmup()
@@ -41,7 +43,7 @@ class BiometricCryptoEngine : CryptoEngine(BIOMETRIC_KEY_ALIAS) {
         }
     }
 
-    private fun generateKeyWithResult(): ValidationResult {
+    private fun generateKeyWithResult(): BiometricValidationResult {
         return try {
             createKey()
             Timber.d("generateKeyWithResult ok")
@@ -57,7 +59,7 @@ class BiometricCryptoEngine : CryptoEngine(BIOMETRIC_KEY_ALIAS) {
         createCryptoObject(Decryption, null)
     }
 
-    fun validate(): ValidationResult {
+    fun validate(): BiometricValidationResult {
         return if (!isKeyPresent()) {
             generateKeyWithResult()
         } else {

@@ -11,21 +11,21 @@ import com.sample.biometric.common.DataResult
 import com.sample.biometric.common.DataResult.Error
 import com.sample.biometric.common.DataResult.Success
 import com.sample.biometric.data.crypto.BiometricCryptoEngine
-import com.sample.biometric.data.crypto.ValidationResult
-import com.sample.biometric.data.crypto.ValidationResult.KEY_INIT_FAIL
-import com.sample.biometric.data.crypto.ValidationResult.KEY_PERMANENTLY_INVALIDATED
-import com.sample.biometric.data.crypto.ValidationResult.OK
-import com.sample.biometric.data.crypto.ValidationResult.VALIDATION_FAILED
+import com.sample.biometric.data.models.BiometricValidationResult
+import com.sample.biometric.data.models.BiometricValidationResult.KEY_INIT_FAIL
+import com.sample.biometric.data.models.BiometricValidationResult.KEY_PERMANENTLY_INVALIDATED
+import com.sample.biometric.data.models.BiometricValidationResult.OK
+import com.sample.biometric.data.models.BiometricValidationResult.VALIDATION_FAILED
 import com.sample.biometric.data.error.InvalidCryptoLayerException
-import com.sample.biometric.data.model.BiometricAuthStatus
-import com.sample.biometric.data.model.BiometricAuthStatus.AVAILABLE_BUT_NOT_ENROLLED
-import com.sample.biometric.data.model.BiometricAuthStatus.NOT_AVAILABLE
-import com.sample.biometric.data.model.BiometricAuthStatus.TEMPORARY_NOT_AVAILABLE
-import com.sample.biometric.data.model.BiometricStatus
-import com.sample.biometric.data.model.CryptoPurpose
-import com.sample.biometric.data.model.KeyStatus
-import com.sample.biometric.data.model.KeyStatus.INVALIDATED
-import com.sample.biometric.data.model.KeyStatus.NOT_READY
+import com.sample.biometric.data.models.BiometricAuthStatus
+import com.sample.biometric.data.models.BiometricAuthStatus.AVAILABLE_BUT_NOT_ENROLLED
+import com.sample.biometric.data.models.BiometricAuthStatus.NOT_AVAILABLE
+import com.sample.biometric.data.models.BiometricAuthStatus.TEMPORARY_NOT_AVAILABLE
+import com.sample.biometric.data.models.BiometricStatus
+import com.sample.biometric.data.models.CryptoPurpose
+import com.sample.biometric.data.models.BiometricKeyStatus
+import com.sample.biometric.data.models.BiometricKeyStatus.INVALIDATED
+import com.sample.biometric.data.models.BiometricKeyStatus.NOT_READY
 import com.sample.biometric.data.repositories.BiometricRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -53,7 +53,7 @@ class BiometricRepositoryImpl(
                 biometricTokenPresent = isTokenPresent,
                 biometricAuthStatus = biometricAuthStatus,
                 keyStatus = when (cryptoValidationResult) {
-                    OK -> KeyStatus.READY
+                    OK -> BiometricKeyStatus.READY
                     KEY_INIT_FAIL, VALIDATION_FAILED -> NOT_READY
                     KEY_PERMANENTLY_INVALIDATED -> INVALIDATED
                 }
@@ -73,7 +73,7 @@ class BiometricRepositoryImpl(
         return@withContext Success(encryptedData)
     }
 
-    private suspend fun checkInternalWithCrypto(): ValidationResult = withContext(dispatcher) {
+    private suspend fun checkInternalWithCrypto(): BiometricValidationResult = withContext(dispatcher) {
         val validationResult = cryptoEngine.validate()
         when (validationResult) {
             KEY_PERMANENTLY_INVALIDATED,

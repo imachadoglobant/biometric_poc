@@ -1,4 +1,4 @@
-package com.sample.biometric.di
+package com.sample.biometric.di.module
 
 import com.sample.biometric.data.repositories.BiometricRepository
 import com.sample.biometric.data.repositories.UserRepository

@@ -1,6 +1,6 @@
 package com.sample.biometric.ui.screen.home
 
-import com.sample.biometric.data.model.UserData
+import com.sample.biometric.data.models.UserData
 
 data class HomeUiState(
     val user: UserData?

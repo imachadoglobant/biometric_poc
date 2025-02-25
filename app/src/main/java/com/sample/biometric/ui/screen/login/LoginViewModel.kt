@@ -7,10 +7,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.sample.biometric.R
 import com.sample.biometric.data.error.InvalidCryptoLayerException
-import com.sample.biometric.data.model.BiometricStatus
-import com.sample.biometric.data.model.CryptoPurpose.Decryption
-import com.sample.biometric.data.model.CryptoPurpose.Encryption
-import com.sample.biometric.data.model.UserData
+import com.sample.biometric.data.models.BiometricStatus
+import com.sample.biometric.data.models.CryptoPurpose.Decryption
+import com.sample.biometric.data.models.CryptoPurpose.Encryption
+import com.sample.biometric.data.models.UserData
 import com.sample.biometric.domain.DomainResult
 import com.sample.biometric.domain.usecases.auth.GetUserUseCase
 import com.sample.biometric.domain.usecases.auth.LoginWithTokenUseCase

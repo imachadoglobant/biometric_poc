@@ -3,7 +3,7 @@ package com.sample.biometric.domain.usecases.biometric
 import com.sample.biometric.common.DataResult
 import com.sample.biometric.data.repositories.BiometricRepository
 import com.sample.biometric.data.repositories.UserRepository
-import com.sample.biometric.data.model.CryptoPurpose
+import com.sample.biometric.data.models.CryptoPurpose
 import com.sample.biometric.domain.DomainResult
 import com.sample.biometric.ui.screen.biometric.BiometricContext
 

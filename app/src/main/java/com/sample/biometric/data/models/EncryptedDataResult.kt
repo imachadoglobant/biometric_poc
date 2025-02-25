@@ -1,4 +1,4 @@
-package com.sample.biometric.data.crypto
+package com.sample.biometric.data.models
 
 data class EncryptedDataResult(
     val data: String,

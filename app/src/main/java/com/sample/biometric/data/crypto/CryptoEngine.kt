@@ -7,8 +7,9 @@ import android.security.keystore.KeyProperties.KEY_ALGORITHM_AES
 import android.security.keystore.KeyProperties.PURPOSE_DECRYPT
 import android.security.keystore.KeyProperties.PURPOSE_ENCRYPT
 import android.util.Base64
-import com.sample.biometric.data.model.CryptoPurpose
-import com.sample.biometric.data.model.CryptoPurpose.Decryption
+import com.sample.biometric.data.models.CryptoPurpose
+import com.sample.biometric.data.models.CryptoPurpose.Decryption
+import com.sample.biometric.data.models.EncryptedDataResult
 import timber.log.Timber
 import java.security.InvalidAlgorithmParameterException
 import java.security.InvalidKeyException

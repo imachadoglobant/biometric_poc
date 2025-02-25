@@ -1,7 +1,7 @@
 package com.sample.biometric.ui.screen.biometric
 
 import androidx.biometric.BiometricPrompt
-import com.sample.biometric.data.model.CryptoPurpose
+import com.sample.biometric.data.models.CryptoPurpose
 
 data class BiometricContext(
     val purpose: CryptoPurpose,

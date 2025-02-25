@@ -2,9 +2,9 @@ package com.sample.biometric.data.repositories
 
 import androidx.biometric.BiometricPrompt.CryptoObject
 import com.sample.biometric.common.DataResult
-import com.sample.biometric.data.crypto.EncryptedDataResult
-import com.sample.biometric.data.model.BiometricStatus
-import com.sample.biometric.data.model.CryptoPurpose
+import com.sample.biometric.data.models.EncryptedDataResult
+import com.sample.biometric.data.models.BiometricStatus
+import com.sample.biometric.data.models.CryptoPurpose
 
 /**
  * Represent the repository for our biometric related data / info

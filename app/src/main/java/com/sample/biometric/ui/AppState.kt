@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 class AppState(
     val navController: NavHostController,
     val scaffoldState: ScaffoldState,
-    private val coroutineScope: CoroutineScope,
+    coroutineScope: CoroutineScope,
     private val resources: Resources,
     private val snackbarManager: SnackbarManager,
 ) {

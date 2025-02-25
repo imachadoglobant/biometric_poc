@@ -1,6 +1,7 @@
-package com.sample.biometric.di
+package com.sample.biometric.di.module
 
 import androidx.lifecycle.ViewModel
+import com.sample.biometric.di.ViewModelKey
 import com.sample.biometric.ui.screen.home.HomeViewModel
 import com.sample.biometric.ui.screen.login.LoginViewModel
 import dagger.Binds

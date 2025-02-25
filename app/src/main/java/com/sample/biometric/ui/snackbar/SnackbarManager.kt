@@ -5,11 +5,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import java.util.*
+import java.util.UUID
 
-/**
- * Jetsnack utility class with a some minor change
- */
 object SnackbarManager {
 
     private val _messages: MutableStateFlow<List<UiMessage>> = MutableStateFlow(emptyList())

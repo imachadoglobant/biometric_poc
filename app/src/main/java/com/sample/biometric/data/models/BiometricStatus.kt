@@ -1,4 +1,4 @@
-package com.sample.biometric.data.model
+package com.sample.biometric.data.models
 
 data class BiometricStatus(
     /**
@@ -14,11 +14,11 @@ data class BiometricStatus(
     /**
      * Give us the status of our cryptographic key
      */
-    val keyStatus: KeyStatus
+    val keyStatus: BiometricKeyStatus
 ){
 
     fun canAskAuthentication() = (biometricAuthStatus == BiometricAuthStatus.READY
-            && keyStatus == KeyStatus.READY)
+            && keyStatus == BiometricKeyStatus.READY)
 
     fun canLoginWithBiometricToken() = biometricTokenPresent && canAskAuthentication()
 

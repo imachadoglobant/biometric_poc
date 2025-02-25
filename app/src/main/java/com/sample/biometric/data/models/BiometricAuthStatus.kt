@@ -1,4 +1,4 @@
-package com.sample.biometric.data.model
+package com.sample.biometric.data.models
 
 enum class BiometricAuthStatus {
     /**

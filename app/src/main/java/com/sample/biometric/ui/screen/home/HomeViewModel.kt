@@ -2,7 +2,7 @@ package com.sample.biometric.ui.screen.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.sample.biometric.data.model.UserData
+import com.sample.biometric.data.models.UserData
 import com.sample.biometric.domain.usecases.auth.ExpireTokenUseCase
 import com.sample.biometric.domain.usecases.auth.GetUserUseCase
 import com.sample.biometric.domain.usecases.auth.LogoutUseCase

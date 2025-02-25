@@ -1,11 +1,10 @@
-package com.sample.biometric.data.daos
+package com.sample.biometric.data.dao
 
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy.Companion.REPLACE
 import androidx.room.Query
-import androidx.room.Update
-import com.sample.biometric.data.entities.UserDataEntity
+import com.sample.biometric.data.entity.UserDataEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

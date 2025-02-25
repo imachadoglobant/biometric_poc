@@ -1,10 +1,10 @@
 package com.sample.biometric.data.repositories.impl
 
-import com.sample.biometric.data.daos.UserDataDao
+import com.sample.biometric.data.dao.UserDataDao
 import com.sample.biometric.data.crypto.CryptoEngine
-import com.sample.biometric.data.crypto.EncryptedDataResult
-import com.sample.biometric.data.entities.UserDataEntity
-import com.sample.biometric.data.model.UserData
+import com.sample.biometric.data.models.EncryptedDataResult
+import com.sample.biometric.data.entity.UserDataEntity
+import com.sample.biometric.data.models.UserData
 import com.sample.biometric.data.repositories.UserRepository
 import kotlinx.coroutines.flow.firstOrNull
 import timber.log.Timber

@@ -1,6 +1,6 @@
 package com.sample.biometric.data.repositories
 
-import com.sample.biometric.data.model.UserData
+import com.sample.biometric.data.models.UserData
 
 /**
  * User repository

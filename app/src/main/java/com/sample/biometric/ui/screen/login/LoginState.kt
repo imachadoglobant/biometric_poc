@@ -1,6 +1,6 @@
 package com.sample.biometric.ui.screen.login
 
-import com.sample.biometric.data.model.UserData
+import com.sample.biometric.data.models.UserData
 import com.sample.biometric.ui.screen.biometric.BiometricContext
 
 data class LoginState (

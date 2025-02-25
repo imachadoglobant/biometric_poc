@@ -1,4 +1,4 @@
-package com.sample.biometric.di
+package com.sample.biometric.di.module
 
 import android.content.Context
 import com.sample.biometric.BiometricApp

@@ -12,7 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.sample.biometric.R
 import com.sample.biometric.common.findActivity
-import com.sample.biometric.data.model.CryptoPurpose
+import com.sample.biometric.data.models.CryptoPurpose
 import timber.log.Timber
 
 @Composable
