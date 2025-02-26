@@ -5,6 +5,7 @@ import com.sample.biometric.data.crypto.CryptoEngine
 import com.sample.biometric.data.models.EncryptedDataResult
 import com.sample.biometric.data.entity.UserDataEntity
 import com.sample.biometric.data.models.UserData
+import com.sample.biometric.data.models.toEncryptedData
 import com.sample.biometric.data.repositories.UserRepository
 import kotlinx.coroutines.flow.firstOrNull
 import timber.log.Timber
@@ -38,9 +39,9 @@ class UserRepositoryImpl(
     override suspend fun retrieve(): UserData? {
         val entity = dao.getFirst().firstOrNull() ?: return null
 
-        val username = cryptoEngine.decrypt(EncryptedDataResult.fromString(entity.username))
-        val token = cryptoEngine.decrypt(EncryptedDataResult.fromString(entity.token))
-        val expiredToken = cryptoEngine.decrypt(EncryptedDataResult.fromString(entity.expiredToken))
+        val username = cryptoEngine.decrypt(entity.username.toEncryptedData())
+        val token = cryptoEngine.decrypt(entity.token.toEncryptedData())
+        val expiredToken = cryptoEngine.decrypt(entity.expiredToken.toEncryptedData())
 
         Timber.d("User data retrieved")
 

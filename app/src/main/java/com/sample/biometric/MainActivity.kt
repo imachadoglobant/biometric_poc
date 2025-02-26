@@ -3,7 +3,6 @@ package com.sample.biometric
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.fragment.app.FragmentActivity
-import com.sample.biometric.di.ViewModelFactory
 import com.sample.biometric.ui.CompositionLocalProvider
 import com.sample.biometric.ui.MainContainer
 import dagger.android.AndroidInjection

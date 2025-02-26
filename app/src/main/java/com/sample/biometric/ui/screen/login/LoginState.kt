@@ -8,25 +8,30 @@ data class LoginState (
     val passwordField: String = "",
 
     /**
-     * True when we want to render the "access with biometry" button
+     * TRUE when we want to render the "access with biometry" button.
      */
     val canLoginWithBiometry: Boolean = false,
 
     /**
-     * User data when logged in, null otherwise
+     * User data when logged in, null otherwise.
      */
     val user: UserData? = null,
 
     /**
-     * Indicate that we should to show the biometric prompt to the user to enroll
-     * the biometric token
+     * Indicates that we should to show the biometric prompt to the user to enroll
+     * the biometric token.
      */
     val askBiometricEnrollment: Boolean = false,
 
     /**
-     * Represent the Authentication context of our prompt
+     * Represent the Authentication context of our prompt.
      */
     val biometricContext: BiometricContext? = null,
+
+    /**
+     * TRUE if device is biometric capabilities, but user hasn't enrolled them yet.
+     */
+    val shouldEnrollBiometric: Boolean = false
 ) {
 
     val isAuthenticated = user?.token?.isNotEmpty() == true

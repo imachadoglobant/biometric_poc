@@ -39,7 +39,7 @@ fun MainContainer() {
             scaffoldState = appState.scaffoldState
         ) {
             BiometricAppNavHost(
-                Modifier.padding(it),
+                modifier = Modifier.padding(it),
                 navController = appState.navController,
             )
         }

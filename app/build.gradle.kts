@@ -51,14 +51,16 @@ android {
 }
 
 dependencies {
-    //Timber logger
+    // Timber logger
     implementation("com.jakewharton.timber:timber:5.0.1")
     // core ktx
     implementation("androidx.core:core-ktx:1.13.1")
-    //lifecycle
-    implementation( "androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
+    implementation("androidx.activity:activity-ktx:1.3.1")
+    implementation("androidx.fragment:fragment-ktx:1.3.1")
+    // lifecycle
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
-    //compose
+    // compose
     implementation("androidx.activity:activity-compose:1.3.0")
     implementation("androidx.compose.ui:ui:1.7.6")
     implementation("androidx.compose.ui:ui-tooling-preview:1.7.6")

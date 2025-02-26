@@ -202,6 +202,7 @@ class LoginViewModel @Inject constructor(
         Timber.d("askBiometricEnrollment=$askBiometricEnrollment")
         var authContext: BiometricContext? = null
         Timber.d("canLoginWithBiometry=${biometricStatus.canLoginWithBiometricToken()}")
+        Timber.d("shouldEnrollBiometric=${biometricStatus.shouldEnrollBiometric()}")
 
         // we want to check if enrollment is ok or not
         if (askBiometricEnrollment) {
@@ -228,7 +229,8 @@ class LoginViewModel @Inject constructor(
                     user = user,
                     canLoginWithBiometry = biometricStatus.canLoginWithBiometricToken(),
                     askBiometricEnrollment = askBiometricEnrollment,
-                    biometricContext = authContext
+                    biometricContext = authContext,
+                    shouldEnrollBiometric = biometricStatus.shouldEnrollBiometric()
                 )
             )
         }

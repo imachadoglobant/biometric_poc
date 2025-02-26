@@ -92,11 +92,22 @@ class BiometricRepositoryImpl(
 
     private fun readBiometricAuthStatus() =
         when (biometricManager.canAuthenticate(REQUIRED_AUTHENTICATORS)) {
-            BIOMETRIC_SUCCESS -> BiometricAuthStatus.READY
-            BIOMETRIC_ERROR_NO_HARDWARE -> NOT_AVAILABLE
-            BIOMETRIC_ERROR_HW_UNAVAILABLE -> TEMPORARY_NOT_AVAILABLE
-            BIOMETRIC_ERROR_NONE_ENROLLED -> AVAILABLE_BUT_NOT_ENROLLED
-            else -> NOT_AVAILABLE
+            BIOMETRIC_SUCCESS -> {
+                Timber.d("App can authenticate using biometrics")
+                BiometricAuthStatus.READY
+            }
+            BIOMETRIC_ERROR_HW_UNAVAILABLE -> {
+                Timber.e("Biometric features are currently unavailable")
+                TEMPORARY_NOT_AVAILABLE
+            }
+            BIOMETRIC_ERROR_NONE_ENROLLED -> {
+                Timber.d("Prompts the user to create credentials that your app accepts")
+                AVAILABLE_BUT_NOT_ENROLLED
+            }
+            else -> {
+                Timber.e( "No biometric features available on this device")
+                NOT_AVAILABLE
+            }
         }
 
     override suspend fun decryptToken(

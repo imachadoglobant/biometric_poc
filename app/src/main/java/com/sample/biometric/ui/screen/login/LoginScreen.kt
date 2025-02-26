@@ -1,5 +1,6 @@
 package com.sample.biometric.ui.screen.login
 
+import androidx.biometric.BiometricPrompt.CryptoObject
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -39,22 +40,40 @@ import com.sample.biometric.ui.ViewState
 import com.sample.biometric.ui.navigation.HomeRoute
 import com.sample.biometric.ui.navigation.LoginRoute
 import com.sample.biometric.ui.retrieveViewModel
+import com.sample.biometric.ui.screen.biometric.BiometricError
 import com.sample.biometric.ui.screen.biometric.BiometricPromptContainer
+import com.sample.biometric.ui.screen.biometric.BiometricSettingsContainer
 import com.sample.biometric.ui.screen.biometric.createPromptInfo
 import com.sample.biometric.ui.screen.biometric.rememberPromptContainerState
+import timber.log.Timber
 
 @Composable
 fun LoginScreen(
     modifier: Modifier = Modifier,
     viewModel: LoginViewModel = retrieveViewModel<LoginViewModel>(),
-    onUserLoginReady: () -> Unit = {},
+    onUserLoginReady: () -> Unit = {}
 ) {
     val uiState: ViewState<LoginState> by viewModel.uiState.collectAsStateWithLifecycle()
     val successState = (uiState as? ViewState.Success)?.data
     val navigateToHome by remember(uiState) {
         derivedStateOf { successState?.isAuthenticated == true && !successState.askBiometricEnrollment }
     }
+    val navigateToSettings by remember(uiState) {
+        derivedStateOf { successState?.isAuthenticated == true && successState.shouldEnrollBiometric }
+    }
     val focusManager = LocalFocusManager.current
+
+    val initPromptContainer = @Composable {
+        InitPromptContainer(
+            successState = successState,
+            onAuthSucceeded = { cryptoObject ->
+                viewModel.onAuthSucceeded(cryptoObject)
+            },
+            onAuthError = { authErr ->
+                viewModel.onAuthError(authErr.errorCode, authErr.errString)
+            }
+        )
+    }
 
     LaunchedEffect(key1 = Unit) {
         viewModel.loadData()
@@ -66,24 +85,18 @@ fun LoginScreen(
         }
     }
 
-    val promptContainerState = rememberPromptContainerState()
-    BiometricPromptContainer(
-        state = promptContainerState,
-        onAuthSucceeded = { cryptoObject ->
-            viewModel.onAuthSucceeded(cryptoObject)
-        },
-        onAuthError = { authErr ->
-            viewModel.onAuthError(authErr.errorCode, authErr.errString)
-        }
-    )
-
-    successState?.biometricContext?.let { auth ->
-        val resources = LocalContext.current.resources
-        LaunchedEffect(key1 = auth) {
-            val promptInfo = createPromptInfo(auth.purpose, resources)
-            promptContainerState.authenticate(promptInfo, auth.cryptoObject)
-        }
+    if (navigateToSettings) {
+        BiometricSettingsContainer(
+            onAuthSucceeded = {
+                viewModel.loadData()
+            },
+            onAuthError = {
+                Timber.e("")
+            }
+        )
     }
+
+    initPromptContainer()
 
     Column(
         modifier = modifier.padding(top = 120.dp),
@@ -138,6 +151,28 @@ fun LoginScreen(
                 viewModel.requireBiometricLogin()
             }
         )
+    }
+}
+
+@Composable
+fun InitPromptContainer(
+    successState: LoginState?,
+    onAuthSucceeded: (cryptoObject: CryptoObject?) -> Unit = {},
+    onAuthError: (BiometricError) -> Unit = {}
+) {
+    val promptContainerState = rememberPromptContainerState()
+    BiometricPromptContainer(
+        state = promptContainerState,
+        onAuthSucceeded = onAuthSucceeded,
+        onAuthError = onAuthError
+    )
+
+    successState?.biometricContext?.let { auth ->
+        val resources = LocalContext.current.resources
+        LaunchedEffect(key1 = auth) {
+            val promptInfo = createPromptInfo(auth.purpose, resources)
+            promptContainerState.authenticate(promptInfo, auth.cryptoObject)
+        }
     }
 }
 

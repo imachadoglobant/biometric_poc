@@ -23,6 +23,10 @@ class BiometricCryptoEngine : CryptoEngine(BIOMETRIC_KEY_ALIAS) {
         private const val BIOMETRIC_KEY_ALIAS = "BIOMETRIC_KEY_ALIAS"
     }
 
+    /**
+     * Configures [SecretKey] builder to require user authentication and key invalidation on
+     * biometric enrollment.
+     */
     override fun createKey(): SecretKey? = createKey {
         Timber.d("createKey userAuthenticationRequired=true invalidatedByBiometricEnrollment=true")
         it.setUserAuthenticationRequired(true)
@@ -59,6 +63,11 @@ class BiometricCryptoEngine : CryptoEngine(BIOMETRIC_KEY_ALIAS) {
         createCryptoObject(Decryption, null)
     }
 
+    /**
+     * Determines if [SecretKey] creation and warmup are successful.
+     *
+     * @return [BiometricValidationResult.OK] if [SecretKey] creation or warmup are successful.
+     */
     fun validate(): BiometricValidationResult {
         return if (!isKeyPresent()) {
             generateKeyWithResult()
@@ -67,6 +76,13 @@ class BiometricCryptoEngine : CryptoEngine(BIOMETRIC_KEY_ALIAS) {
         }
     }
 
+    /**
+     * Initializes [CryptoObject] for data encryption/decryption.
+     *
+     * @param purpose [CryptoPurpose] to determine [CryptoObject] objective.
+     * @param iv Initialization Vector (IV) used for data decryption.
+     * @return [CryptoObject] instance used for biometric data encryption/decryption.
+     */
     fun createCryptoObject(purpose: CryptoPurpose, iv: String?): CryptoObject {
         Timber.d("createCryptoObject")
         val decryptedIv = if (iv == null) {
@@ -79,8 +95,16 @@ class BiometricCryptoEngine : CryptoEngine(BIOMETRIC_KEY_ALIAS) {
         return CryptoObject(super.initCipher(purpose, decryptedIv))
     }
 
+    /**
+     * Encrypts given text using the provided [CryptoObject] instance.
+     *
+     * @param clearText Clear text data to encrypt.
+     * @param cryptoObject [CryptoObject] instance used for biometric enrollment and encryption.
+     * @return [EncryptedDataResult] if encryption is successful containing the encrypted data and
+     * Initialization Vector (IV), or null if exception is thrown and the resulting cipher is null.
+     */
     fun encrypt(clearText: String, cryptoObject: CryptoObject): EncryptedDataResult? {
-        Timber.d("encrypt biometric")
+        Timber.d("biometric encrypt")
         val cipher = cryptoObject.cipher ?: return null
         val tokenData = clearText.toByteArray(UTF_8)
         val encryptedData = cipher.doFinal(tokenData)
@@ -93,6 +117,14 @@ class BiometricCryptoEngine : CryptoEngine(BIOMETRIC_KEY_ALIAS) {
         )
     }
 
+    /**
+     * Decrypts given data using the provided [CryptoObject] instance.
+     *
+     * @param data Text to decrypt.
+     * @param cryptoObject [CryptoObject] instance used during biometric authentication and data
+     * decryption.
+     * @return Decrypted text, or an empty String if exception is thrown.
+     */
     fun decrypt(data: String, cryptoObject: CryptoObject): String {
         Timber.d("biometric decrypt")
         val decodedData = Base64.decode(data, Base64.DEFAULT)

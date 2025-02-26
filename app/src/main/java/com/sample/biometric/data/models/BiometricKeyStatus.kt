@@ -1,5 +1,8 @@
 package com.sample.biometric.data.models
 
+/**
+ * Used by [BiometricStatus] to determine [javax.crypto.SecretKey] creating status.
+ */
 enum class BiometricKeyStatus {
     /**
      * Key is not ready to use
